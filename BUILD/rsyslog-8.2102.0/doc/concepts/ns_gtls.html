@@ -1,0 +1,225 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gtls Network Stream Driver &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="openssl Network Stream Driver" href="ns_ossl.html" />
+    <link rel="prev" title="ptcp Network Stream Driver" href="ns_ptcp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ns_ossl.html" title="openssl Network Stream Driver"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ns_ptcp.html" title="ptcp Network Stream Driver"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Concepts</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="netstrm_drvr.html" accesskey="U">NetStream Drivers</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="gtls-network-stream-driver">
+<h1>gtls Network Stream Driver<a class="headerlink" href="#gtls-network-stream-driver" title="Permalink to this headline">¶</a></h1>
+<p>This network stream driver implements a TLS
+protected transport via the <a class="reference external" href="http://www.gnu.org/software/gnutls/">GnuTLS
+library</a>.</p>
+<p><strong>Available since:</strong> 3.19.0 (suggested minimum 3.19.8 and above)</p>
+</div>
+<div class="section" id="supported-driver-modes">
+<h1>Supported Driver Modes<a class="headerlink" href="#supported-driver-modes" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><strong>0</strong> - unencrypted transmission (just like <a class="reference external" href="ns_ptcp.html">ptcp</a> driver)</li>
+<li><strong>1</strong> - TLS-protected operation</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Mode 0 does not provide any benefit over the ptcp driver. This
+mode exists for technical reasons, but should not be used. It may be
+removed in the future.</p>
+</div>
+</div>
+<div class="section" id="supported-authentication-modes">
+<h1>Supported Authentication Modes<a class="headerlink" href="#supported-authentication-modes" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><strong>anon</strong> - anonymous authentication as described in IETF’s
+draft-ietf-syslog-transport-tls-12 Internet draft</li>
+<li><strong>x509/fingerprint</strong> - certificate fingerprint authentication as
+described in IETF’s draft-ietf-syslog-transport-tls-12 Internet draft</li>
+<li><strong>x509/certvalid</strong> - certificate validation only</li>
+<li><strong>x509/name</strong> - certificate validation and subject name authentication as
+described in IETF’s draft-ietf-syslog-transport-tls-12 Internet draft</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">“anon” does not permit to authenticate the remote peer. As such,
+this mode is vulnerable to man in the middle attacks as well as
+unauthorized access. It is recommended NOT to use this mode.
+A certificate/key does not need to be configured in this authmode.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p><strong>Anon mode changes in:</strong> v8.190 (or above)</p>
+<ul class="last simple">
+<li><dl class="first docutils">
+<dt>Anonymous Ciphers (DH and ECDH) are available in ANON mode.</dt>
+<dd>Note: ECDH is not available on GnuTLS Version below 3.x.</dd>
+</dl>
+</li>
+<li>Server does not require a certificate anymore in anon mode.</li>
+<li>If Server has a certificate and the Client does not, the highest possible
+ciphers will be selected.</li>
+<li>If both Server and Client do not have a certificate, the highest available
+anon cipher will be used.</li>
+</ul>
+</div>
+<p>x509/certvalid is a nonstandard mode. It validates the remote peers
+certificate, but does not check the subject name. This is weak
+authentication that may be useful in scenarios where multiple devices
+are deployed and it is sufficient proof of authenticity when their
+certificates are signed by the CA the server trusts. This is better than
+anon authentication, but still not recommended. <strong>Known Problems</strong></p>
+<p>Even in x509/fingerprint mode, both the client and server certificate
+currently must be signed by the same root CA. This is an artifact of the
+underlying GnuTLS library and the way we use it. It is expected that we
+can resolve this issue in the future.</p>
+</div>
+<div class="section" id="checkextendedkeypurpose">
+<h1>CheckExtendedKeyPurpose<a class="headerlink" href="#checkextendedkeypurpose" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><strong>off</strong> - by default this binary argument is turned off, which means
+that Extended Key Usage extension of GNUTls certificates is ignored
+in cert validation.</li>
+<li><strong>on</strong> - if you turn this option on, it will check that peer’s certificate
+contains the value for GNUTLS_KP_TLS_WWW_SERVER or GNUTLS_KP_TLS_WWW_CLIENT
+respectively, depending whether we are on sending or receiving end of a
+connection.</li>
+</ul>
+</div>
+<div class="section" id="prioritizesan">
+<h1>PrioritizeSAN<a class="headerlink" href="#prioritizesan" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><strong>off</strong> - by default this binary argument is turned off, which means
+that validation of names in certificates goes per older RFC 5280 and either
+Subject Alternative Name or Common Name match is good and connection is
+allowed.</li>
+<li><strong>on</strong> - if you turn this option on, it will perform stricter name checking
+as per newer RFC 6125, where, if any SAN is found, contents of CN are
+completely ignored and name validity is decided based on SAN only.</li>
+</ul>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">gtls Network Stream Driver</a></li>
+<li><a class="reference internal" href="#supported-driver-modes">Supported Driver Modes</a></li>
+<li><a class="reference internal" href="#supported-authentication-modes">Supported Authentication Modes</a></li>
+<li><a class="reference internal" href="#checkextendedkeypurpose">CheckExtendedKeyPurpose</a></li>
+<li><a class="reference internal" href="#prioritizesan">PrioritizeSAN</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="ns_ptcp.html"
+                        title="previous chapter">ptcp Network Stream Driver</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="ns_ossl.html"
+                        title="next chapter">openssl Network Stream Driver</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/concepts/ns_gtls.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/concepts/ns_gtls.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ns_ossl.html" title="openssl Network Stream Driver"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ns_ptcp.html" title="ptcp Network Stream Driver"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Concepts</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="netstrm_drvr.html" >NetStream Drivers</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

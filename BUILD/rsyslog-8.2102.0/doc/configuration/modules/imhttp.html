@@ -1,0 +1,556 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>imhttp: http input module &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="imjournal: Systemd Journal Input Module" href="imjournal.html" />
+    <link rel="prev" title="GSSAPI module support in rsyslog v3" href="gssapi.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="imjournal.html" title="imjournal: Systemd Journal Input Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gssapi.html" title="GSSAPI module support in rsyslog v3"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" accesskey="U">Input Modules</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="imhttp-http-input-module">
+<h1>imhttp: http input module<a class="headerlink" href="#imhttp-http-input-module" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="71%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Module Name:</strong></td>
+<td><strong>imhttp</strong></td>
+</tr>
+<tr class="row-even"><td><strong>Author:</strong></td>
+<td>Nelson Yen</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>Provides the ability to receive adhoc and plaintext syslog messages via http. The format of messages accepted,
+depends on configuration. imhttp exposes the capabilities and the underlying options of the http library
+used, which currently is civetweb.</p>
+<p>Civetweb documentation:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/civetweb/civetweb/blob/master/docs/UserManual.md">Civetweb User Manual</a></li>
+<li><a class="reference external" href="https://github.com/civetweb/civetweb/blob/master/docs/UserManual.md#configuration-options">Civetweb Configuration Options</a></li>
+</ul>
+</div>
+<div class="section" id="notable-features">
+<h2>Notable Features<a class="headerlink" href="#notable-features" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="#imhttp-statistic-counter"><span class="std std-ref">Statistic Counter</span></a></li>
+<li><a class="reference internal" href="#imhttp-error-messages"><span class="std std-ref">Error Messages</span></a></li>
+</ul>
+</div>
+<div class="section" id="configuration-parameters">
+<h2>Configuration Parameters<a class="headerlink" href="#configuration-parameters" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Parameter names are case-insensitive.</p>
+</div>
+<div class="section" id="module-parameters">
+<h3>Module Parameters<a class="headerlink" href="#module-parameters" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="ports">
+<h4>Ports<a class="headerlink" href="#ports" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>ports</td>
+<td>8080</td>
+</tr>
+</tbody>
+</table>
+<p>Configures “listening_ports” in the civetweb library. This option may also be configured using the
+<a class="reference internal" href="#liboptions">liboptions</a> (below) however, this option will take precendence.</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/civetweb/civetweb/blob/master/docs/UserManual.md#listening_ports-8080">Civetweb listening_ports</a></li>
+</ul>
+</div>
+<div class="section" id="documentroot">
+<h4>documentroot<a class="headerlink" href="#documentroot" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>none</td>
+<td>.</td>
+</tr>
+</tbody>
+</table>
+<p>Configures “document_root” in the civetweb library. This option may also be configured using <a class="reference internal" href="#liboptions">liboptions</a>, however
+this option will take precedence.</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/civetweb/civetweb/blob/master/docs/UserManual.md#document_root-">Civetweb document_root</a></li>
+</ul>
+</div>
+<div class="section" id="liboptions">
+<span id="id1"></span><h4>liboptions<a class="headerlink" href="#liboptions" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>no</td>
+<td>none</td>
+<td>on</td>
+</tr>
+</tbody>
+</table>
+<p>Configures civetweb library “Options”.</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/civetweb/civetweb/blob/master/docs/UserManual.md#options-from-civetwebc">Civetweb Options</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="input-parameters">
+<h3>Input Parameters<a class="headerlink" href="#input-parameters" title="Permalink to this headline">¶</a></h3>
+<p>These parameters can be used with the “input()” statement. They apply to
+the input they are specified with.</p>
+<div class="section" id="endpoint">
+<h4>Endpoint<a class="headerlink" href="#endpoint" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>yes</td>
+<td>path that begins with ‘/’</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Sets a request path for an http input. Path should always start with a ‘/’.</p>
+</div>
+<div class="section" id="disablelfdelimiter">
+<h4>DisableLFDelimiter<a class="headerlink" href="#disablelfdelimiter" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>no</td>
+<td>&#160;</td>
+<td>off</td>
+</tr>
+</tbody>
+</table>
+<p>By default LF is used to delimit msg frames, for data is sent in batches.
+Set this to ‘on’ if this behavior is not needed.</p>
+</div>
+<div class="section" id="name">
+<h4>Name<a class="headerlink" href="#name" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>&#160;</td>
+<td>imhttp</td>
+</tr>
+</tbody>
+</table>
+<p>Sets a name for the inputname property. If no name is set “imhttp”
+is used by default. Setting a name is not strictly necessary, but can
+be useful to apply filtering based on which input the message was
+received from.</p>
+</div>
+<div class="section" id="ruleset">
+<h4>Ruleset<a class="headerlink" href="#ruleset" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>&#160;</td>
+<td>default ruleset</td>
+</tr>
+</tbody>
+</table>
+<p>Binds specified ruleset to this input. If not set, the default
+ruleset is bound.</p>
+</div>
+<div class="section" id="supportoctetcountedframing">
+<h4>SupportOctetCountedFraming<a class="headerlink" href="#supportoctetcountedframing" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>no</td>
+<td>&#160;</td>
+<td>off</td>
+</tr>
+</tbody>
+</table>
+<p>Useful to send data using syslog style message framing, disabled by default. Message framing is described by <a class="reference external" href="https://tools.ietf.org/html/rfc6587#section-3.4.1">RFC 6587</a> .</p>
+</div>
+<div class="section" id="ratelimit-interval">
+<h4>RateLimit.Interval<a class="headerlink" href="#ratelimit-interval" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>integer</td>
+<td>no</td>
+<td>none</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies the rate-limiting interval in seconds. Set it to a number
+of seconds to activate rate-limiting.</p>
+</div>
+<div class="section" id="ratelimit-burst">
+<h4>RateLimit.Burst<a class="headerlink" href="#ratelimit-burst" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>integer</td>
+<td>no</td>
+<td>none</td>
+<td>10000</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies the rate-limiting burst in number of messages.</p>
+</div>
+<div class="section" id="flowcontrol">
+<h4>flowControl<a class="headerlink" href="#flowcontrol" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>no</td>
+<td>none</td>
+<td>on</td>
+</tr>
+</tbody>
+</table>
+<p>Flow control is used to throttle the sender if the receiver queue is
+near-full preserving some space for input that can not be throttled.</p>
+</div>
+<div class="section" id="addmetadata">
+<h4>addmetadata<a class="headerlink" href="#addmetadata" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>no</td>
+<td>none</td>
+<td>off</td>
+</tr>
+</tbody>
+</table>
+<p>Enables metadata injection into <cite>$!metadata</cite> property. Currently, only header data is supported.
+The following metadata will be injected into the following properties:</p>
+<ul class="simple">
+<li><cite>$!metadata!httpheaders</cite>: http header data will be injected here as key value pairs. All header names will automatically be lowercased
+for case-insensitive access.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="statistic-counter">
+<span id="imhttp-statistic-counter"></span><h2>Statistic Counter<a class="headerlink" href="#statistic-counter" title="Permalink to this headline">¶</a></h2>
+<p>This plugin maintains global imhttp <a class="reference internal" href="../rsyslog_statistic_counter.html"><span class="doc">statistics</span></a>. The statistic’s origin and name is “imhttp” and is
+accumulated for all inputs. The statistic has the following counters:</p>
+<ul class="simple">
+<li><strong>submitted</strong> - Total number of messages successfully submitted for processing since startup.</li>
+<li><strong>failed</strong> - Total number of messages failed since startup, due to processing a request.</li>
+<li><strong>discarded</strong> - Total number of messages discarded since startup, due to rate limiting or similar.</li>
+</ul>
+</div>
+<div class="section" id="error-messages">
+<span id="imhttp-error-messages"></span><h2>Error Messages<a class="headerlink" href="#error-messages" title="Permalink to this headline">¶</a></h2>
+<p>When a message is to long it will be truncated and an error will show the remaining length of the message and the beginning of it. It will be easier to comprehend the truncation.</p>
+</div>
+<div class="section" id="caveats-known-bugs">
+<h2>Caveats/Known Bugs<a class="headerlink" href="#caveats-known-bugs" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>module currently only a single http instance, however multiple ports may be bound.</li>
+</ul>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="example-1">
+<h3>Example 1<a class="headerlink" href="#example-1" title="Permalink to this headline">¶</a></h3>
+<p>This sets up a http server instance on port 8080 with two inputs.
+One input path at ‘/postrequest’, and another at ‘/postrequest2’:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># ports=8080
+# document root=&#39;.&#39;
+module(load=&quot;imhttp&quot;) # needs to be done just once
+
+# arbitrary input loads
+input(type=&quot;imhttp&quot;
+      name=&quot;myinput1&quot;
+      endpoint=&quot;/postrequest&quot;
+      ruleset=&quot;postrequest_rs&quot;)
+
+# define 2nd input path, using octet-counted framing,
+# and routing to different ruleset
+input(type=&quot;imhttp&quot;
+      name=&quot;myinput2&quot;
+      endpoint=&quot;/postrequest2&quot;
+      SupportOctetCountedFraming=&quot;on&quot;
+      ruleset=&quot;postrequest_ruleset2&quot;)
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-2">
+<h3>Example 2<a class="headerlink" href="#example-2" title="Permalink to this headline">¶</a></h3>
+<p>This sets up a http server instance on ports 80 and 443s (use ‘s’ to indicate ssl) with an input path at ‘/postrequest’:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># ports=8080, 443 (ssl)
+# document root=&#39;.&#39;
+module(load=&quot;imhttp&quot; ports=8080,443s)
+input(type=&quot;imhttp&quot;
+      endpoint=&quot;/postrequest&quot;
+      ruleset=&quot;postrequest_ruleset&quot;)
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-3">
+<h3>Example 3<a class="headerlink" href="#example-3" title="Permalink to this headline">¶</a></h3>
+<p>imhttp can also support the underlying options of <a class="reference external" href="https://github.com/civetweb/civetweb/blob/master/docs/UserManual.md">Civetweb</a> using the <a class="reference internal" href="#liboptions">liboptions</a> option.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module(load=&quot;imhttp&quot;
+       liboptions=[
+         &quot;error_log_file=my_log_file_path&quot;,
+         &quot;access_log_file=my_http_access_log_path&quot;,
+       ])
+
+input(type=&quot;imhttp&quot;
+      endpoint=&quot;/postrequest&quot;
+      ruleset=&quot;postrequest_ruleset&quot;
+      )
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">imhttp: http input module</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#notable-features">Notable Features</a></li>
+<li><a class="reference internal" href="#configuration-parameters">Configuration Parameters</a><ul>
+<li><a class="reference internal" href="#module-parameters">Module Parameters</a><ul>
+<li><a class="reference internal" href="#ports">Ports</a></li>
+<li><a class="reference internal" href="#documentroot">documentroot</a></li>
+<li><a class="reference internal" href="#liboptions">liboptions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#input-parameters">Input Parameters</a><ul>
+<li><a class="reference internal" href="#endpoint">Endpoint</a></li>
+<li><a class="reference internal" href="#disablelfdelimiter">DisableLFDelimiter</a></li>
+<li><a class="reference internal" href="#name">Name</a></li>
+<li><a class="reference internal" href="#ruleset">Ruleset</a></li>
+<li><a class="reference internal" href="#supportoctetcountedframing">SupportOctetCountedFraming</a></li>
+<li><a class="reference internal" href="#ratelimit-interval">RateLimit.Interval</a></li>
+<li><a class="reference internal" href="#ratelimit-burst">RateLimit.Burst</a></li>
+<li><a class="reference internal" href="#flowcontrol">flowControl</a></li>
+<li><a class="reference internal" href="#addmetadata">addmetadata</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#statistic-counter">Statistic Counter</a></li>
+<li><a class="reference internal" href="#error-messages">Error Messages</a></li>
+<li><a class="reference internal" href="#caveats-known-bugs">Caveats/Known Bugs</a></li>
+<li><a class="reference internal" href="#examples">Examples</a><ul>
+<li><a class="reference internal" href="#example-1">Example 1</a></li>
+<li><a class="reference internal" href="#example-2">Example 2</a></li>
+<li><a class="reference internal" href="#example-3">Example 3</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gssapi.html"
+                        title="previous chapter">GSSAPI module support in rsyslog v3</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="imjournal.html"
+                        title="next chapter">imjournal: Systemd Journal Input Module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/configuration/modules/imhttp.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/configuration/modules/imhttp.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="imjournal.html" title="imjournal: Systemd Journal Input Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gssapi.html" title="GSSAPI module support in rsyslog v3"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" >Input Modules</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

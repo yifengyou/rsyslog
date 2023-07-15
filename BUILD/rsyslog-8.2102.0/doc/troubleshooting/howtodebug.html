@@ -1,0 +1,186 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>How to create a debug log &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="FAQ" href="../faq/index.html" />
+    <link rel="prev" title="troubleshooting problems" href="troubleshoot.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../faq/index.html" title="FAQ"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="troubleshoot.html" title="troubleshooting problems"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Troubleshooting</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="how-to-create-a-debug-log">
+<h1>How to create a debug log<a class="headerlink" href="#how-to-create-a-debug-log" title="Permalink to this headline">¶</a></h1>
+<p>Creating a debug log is actually quite simple. You just have to add a
+few lines to the configuration file.</p>
+<div class="section" id="regular-debug-output">
+<h2>Regular debug output<a class="headerlink" href="#regular-debug-output" title="Permalink to this headline">¶</a></h2>
+<p>Add the following right at the beginning of the rsyslog.conf file. This
+will ensure that debug support is the first thing to enable when the
+rsyslog service is started:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$DebugFile /var/log/rsyslog.debug
+$DebugLevel 2
+</pre></div>
+</div>
+<p>The actual file path and name may be changed if required.</p>
+<p>Having set the above, when rsyslog is restarted it will produce a continuous
+debug file.</p>
+</div>
+<div class="section" id="debug-on-demand">
+<h2>Debug on Demand<a class="headerlink" href="#debug-on-demand" title="Permalink to this headline">¶</a></h2>
+<p>For having rsyslog be ready to create a debug log (aka Debug on Demand), the
+settings are a little different.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$DebugFile /var/log/rsyslog.debug
+$DebugLevel 1
+</pre></div>
+</div>
+<p>Now, rsyslog will not create a debug log on restart, but wait for a USR signal
+to the pid. When sent, the debug output will be triggered. When sent again,
+debug output will be stopped.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>kill -USR1 `cat /var/run/rsyslogd.pid`
+</pre></div>
+</div>
+</div>
+<div class="section" id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Having debug output enabled, the debug file will grow very quickly. Make sure
+to not have it enabled permanently. The file will eventually fill up the disk.</li>
+<li>Debug mode is not to be used in a productive environment as a permanent setting.
+It will affect the processing and performance.</li>
+</ul>
+</div>
+<div class="section" id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="troubleshoot.html"><span class="doc">Troubleshooting</span></a> doc page.</li>
+<li><a class="reference internal" href="debug.html"><span class="doc">Debug Support</span></a> doc page with more detailed
+information.</li>
+</ul>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">How to create a debug log</a><ul>
+<li><a class="reference internal" href="#regular-debug-output">Regular debug output</a></li>
+<li><a class="reference internal" href="#debug-on-demand">Debug on Demand</a></li>
+<li><a class="reference internal" href="#notes">Notes</a></li>
+<li><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="troubleshoot.html"
+                        title="previous chapter">troubleshooting problems</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../faq/index.html"
+                        title="next chapter">FAQ</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/troubleshooting/howtodebug.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/troubleshooting/howtodebug.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../faq/index.html" title="FAQ"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="troubleshoot.html" title="troubleshooting problems"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Troubleshooting</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+diff -up rsyslog-8.2102.0/doc/configuration/modules/imfile.html.state-file-leaking-doc rsyslog-8.2102.0/doc/configuration/modules/imfile.html
+--- rsyslog-8.2102.0/doc/configuration/modules/imfile.html.state-file-leaking-doc	2021-02-15 12:53:31.000000000 +0100
++++ rsyslog-8.2102.0/doc/configuration/modules/imfile.html	2022-03-29 10:35:07.187827004 +0200
+@@ -294,6 +294,28 @@ rsyslog needs write permissions to work
+ also might require SELinux definitions (or similar for other enhanced security
+ systems).</p>
+ </div>
++<div class="section" id="deletestateonfilemove">
++<h4>deleteStateOnFileMove<a class="headerlink" href="#deletestateonfilemove" title="Permalink to this headline">¶</a></h4>
++<table border="1" class="colwidths-auto parameter-table docutils">
++<thead valign="bottom">
++<tr class="row-odd"><th class="head">type</th>
++<th class="head">default</th>
++<th class="head">mandatory</th>
++<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
++</tr>
++</thead>
++<tbody valign="top">
++<tr class="row-even"><td>binary</td>
++<td>off</td>
++<td>no</td>
++<td>none</td>
++</tr>
++</tbody>
++</table>
++<p>This parameter controls if state files are deleted if their associated main file is rotated via move. Usually, this is a good idea, because otherwise state files are not deleted when log rotation occurs.</p>
++
++<p>However, there is one situation where not deleting associated state file after log rotation makes sense: this is the case if a monitored file is later moved back to the same location as it was before.</p>
++</div>
+ </div>
+ <div class="section" id="input-parameters">
+ <h3>Input Parameters<a class="headerlink" href="#input-parameters" title="Permalink to this headline">¶</a></h3>
+@@ -1214,6 +1236,7 @@ and Others.</p>
+ <li><a class="reference internal" href="#sortfiles">sortFiles</a></li>
+ <li><a class="reference internal" href="#pollinginterval">PollingInterval</a></li>
+ <li><a class="reference internal" href="#statefile-directory">statefile.directory</a></li>
++<li><a class="reference internal" href="#deletestateonfilemove">deleteStateOnFileMove</a></li>
+ </ul>
+ </li>
+ <li><a class="reference internal" href="#input-parameters">Input Parameters</a><ul>
+@@ -1311,4 +1334,4 @@ and Others.</p>
+     <div class="footer" role="contentinfo">
+     </div>
+   </body>
+-</html>
+\ No newline at end of file
++</html>

@@ -1,0 +1,21 @@
+diff -up rsyslog-8.2102.0/plugins/omrelp/omrelp.c.orig rsyslog-8.2102.0/plugins/omrelp/omrelp.c
+--- rsyslog-8.2102.0/plugins/omrelp/omrelp.c.orig	2021-06-15 12:46:14.758589030 +0200
++++ rsyslog-8.2102.0/plugins/omrelp/omrelp.c	2021-06-15 12:47:08.130516632 +0200
+@@ -303,7 +303,7 @@ ENDfreeCnf
+ BEGINcreateInstance
+ CODESTARTcreateInstance
+ 	pData->sizeWindow = 0;
+-	pData->timeout = 90;
++	pData->timeout = 5;
+ 	pData->connTimeout = 10;
+ 	pData->rebindInterval = 0;
+ 	pData->bEnableTLS = DFLT_ENABLE_TLS;
+@@ -365,7 +365,7 @@ setInstParamDefaults(instanceData *pData
+ 	pData->target = NULL;
+ 	pData->port = NULL;
+ 	pData->tplName = NULL;
+-	pData->timeout = 90;
++	pData->timeout = 5;
+ 	pData->connTimeout = 10;
+ 	pData->sizeWindow = 0;
+ 	pData->rebindInterval = 0;

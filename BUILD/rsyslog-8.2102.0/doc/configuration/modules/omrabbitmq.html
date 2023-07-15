@@ -1,0 +1,581 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>omrabbitmq: RabbitMQ output module &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="omrelp: RELP Output Module" href="omrelp.html" />
+    <link rel="prev" title="omprog: Program integration Output module" href="omprog.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="omrelp.html" title="omrelp: RELP Output Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="omprog.html" title="omprog: Program integration Output module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_output.html" accesskey="U">Output Modules</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="omrabbitmq-rabbitmq-output-module">
+<h1>omrabbitmq: RabbitMQ output module<a class="headerlink" href="#omrabbitmq-rabbitmq-output-module" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="78%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Module Name:</strong></td>
+<td><strong>omrabbitmq</strong></td>
+</tr>
+<tr class="row-even"><td><strong>Authors:</strong></td>
+<td>Jean-Philippe Hilaire &lt;<a class="reference external" href="mailto:jean-philippe&#46;hilaire&#37;&#52;&#48;pmu&#46;fr">jean-philippe<span>&#46;</span>hilaire<span>&#64;</span>pmu<span>&#46;</span>fr</a>&gt; &amp; Philippe Duveau &lt;<a class="reference external" href="mailto:philippe&#46;duveau&#37;&#52;&#48;free&#46;fr">philippe<span>&#46;</span>duveau<span>&#64;</span>free<span>&#46;</span>fr</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>This module sends syslog messages into RabbitMQ server.
+Only v6 configuration syntax is supported.</p>
+<p><strong>omrabbitmq is tested and is running in production with 8.x version of rsyslog.</strong></p>
+</div>
+<div class="section" id="compile">
+<h2>Compile<a class="headerlink" href="#compile" title="Permalink to this headline">¶</a></h2>
+<p>To successfully compile omrabbitmq module you need <a class="reference external" href="https://github.com/alanxz/rabbitmq-c">rabbitmq-c</a> library version &gt;= 0.4.</p>
+<blockquote>
+<div>./configure –enable-omrabbitmq …</div></blockquote>
+</div>
+<div class="section" id="configuration-parameters">
+<h2>Configuration Parameters<a class="headerlink" href="#configuration-parameters" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="action-parameters">
+<h3>Action Parameters<a class="headerlink" href="#action-parameters" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="host">
+<h4>host<a class="headerlink" href="#host" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>yes</td>
+<td>hostname[:port][ hostname2[:port2]]</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>rabbitmq server(s). See HA configuration</p>
+</div>
+<div class="section" id="port">
+<h4>port<a class="headerlink" href="#port" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>port</td>
+<td>5672</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="virtual-host">
+<h4>virtual_host<a class="headerlink" href="#virtual-host" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>yes</td>
+<td>path</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>virtual message broker</p>
+</div>
+<div class="section" id="user">
+<h4>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>yes</td>
+<td>user</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>user name</p>
+</div>
+<div class="section" id="password">
+<h4>password<a class="headerlink" href="#password" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>yes</td>
+<td>password</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>user password</p>
+</div>
+<div class="section" id="exchange">
+<h4>exchange<a class="headerlink" href="#exchange" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>name</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>exchange name</p>
+</div>
+<div class="section" id="routing-key">
+<h4>routing_key<a class="headerlink" href="#routing-key" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>name</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>value of routing key</p>
+</div>
+<div class="section" id="routing-key-template">
+<h4>routing_key_template<a class="headerlink" href="#routing-key-template" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>template_name</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>template used to compute the routing key</p>
+</div>
+<div class="section" id="body-template">
+<h4>body_template<a class="headerlink" href="#body-template" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>template</td>
+<td>StdJSONFmt</td>
+</tr>
+</tbody>
+</table>
+<p>template used to compute the message body. If the template is an empty string the sent message will be %rawmsg%</p>
+</div>
+<div class="section" id="delivery-mode">
+<h4>delivery_mode<a class="headerlink" href="#delivery-mode" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>TRANSIENT|PERSISTANT</td>
+<td>TRANSIENT</td>
+</tr>
+</tbody>
+</table>
+<p>persistence of the message in the broker</p>
+</div>
+<div class="section" id="expiration">
+<h4>expiration<a class="headerlink" href="#expiration" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>milliseconds</td>
+<td>no expiration</td>
+</tr>
+</tbody>
+</table>
+<p>ttl of the amqp message</p>
+</div>
+<div class="section" id="populate-properties">
+<h4>populate_properties<a class="headerlink" href="#populate-properties" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>no</td>
+<td>&#160;</td>
+<td>off</td>
+</tr>
+</tbody>
+</table>
+<p>fill timestamp, appid, msgid, hostname (custom header) with message informations</p>
+</div>
+<div class="section" id="content-type">
+<h4>content_type<a class="headerlink" href="#content-type" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>value</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>content type as a MIME value</p>
+</div>
+<div class="section" id="declare-exchange">
+<h4>declare_exchange<a class="headerlink" href="#declare-exchange" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>no</td>
+<td>off</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>Rsyslog tries to declare the exchange on startup. Declaration failure (already exists with different parameters or insufficient rights) is warned but does not cancel the module instance.</p>
+</div>
+<div class="section" id="recover-policy">
+<h4>recover_policy<a class="headerlink" href="#recover-policy" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>check_interval;short_failure_interval; short_failure_nb_max;graceful_interval</td>
+<td>60;6;3;600</td>
+</tr>
+</tbody>
+</table>
+<p>See HA configuration</p>
+</div>
+</div>
+</div>
+<div class="section" id="ha-configuration">
+<h2>HA configuration<a class="headerlink" href="#ha-configuration" title="Permalink to this headline">¶</a></h2>
+<p>The module can use two rabbitmq server in a fail-over mode. To configure this mode, the host parameter has to reference the two rabbitmq servers separated by space.
+Each server can be optionally completed with the port (useful when they are different).
+One of the servers is chosen on startup as a preferred one. The module connects to this server with a fail-over policy which can be defined through the action parameter “recover_policy”.</p>
+<p>The module launch a back-ground thread to monitor the connection. As soon as the connection fails, the thread retries to restablish the connection and switch to the back-up server if needed to recover the service. While connected to backup server, the thread tries to reconnect to the preferred server using a “recover_policy”. This behaviour allow to load balance the client across the two rabbitmq servers on normal conditions, switch to the running server in case of failure and rebalanced on the two server as soon as the failed server is recovered without restarting clients.</p>
+<p>The recover policy is based on 4 parameters :</p>
+<ul class="simple">
+<li><cite>check_interval</cite> is the base duration between connection retries (default is 60 seconds)</li>
+<li><cite>short_failure_interval</cite> is a duration under which two successive failures are considered as abnormal for the rabbitmq server (default is <cite>check_interval/10</cite>)</li>
+<li><cite>short_failure_nb_max</cite> is the number of successive short failure are detected before to apply the graceful interval (default is 3)</li>
+<li><cite>graceful_interval</cite> is a longer duration used if the rabbitmq server is unstable (default is <cite>check_interval*10</cite>).</li>
+</ul>
+<p>The short failures detection is applied in case of unstable network or server and force to switch to back-up server for at least ‘graceful-interval’ avoiding heavy load on the unstable server. This can avoid dramatic scenarios in a multisites deployment.</p>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="example-1">
+<h3>Example 1<a class="headerlink" href="#example-1" title="Permalink to this headline">¶</a></h3>
+<p>This is the simplest action :</p>
+<ul class="simple">
+<li>No High Availability</li>
+<li>The routing-key is constant</li>
+<li>The sent message use JSON format</li>
+</ul>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module(load=&#39;omrabbitmq&#39;)
+action(type=&quot;omrabbitmq&quot;
+       host=&quot;localhost&quot;
+       virtual_host=&quot;/&quot;
+       user=&quot;guest&quot;
+       password=&quot;guest&quot;
+       exchange=&quot;syslog&quot;
+       routing_key=&quot;syslog.all&quot;)
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-2">
+<h3>Example 2<a class="headerlink" href="#example-2" title="Permalink to this headline">¶</a></h3>
+<p>Action characteristics :</p>
+<ul class="simple">
+<li>No High Availability</li>
+<li>The routing-key is computed</li>
+<li>The sent message is a raw message</li>
+</ul>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module(load=&#39;omrabbitmq&#39;)
+template(name=&quot;rkTpl&quot; type=&quot;string&quot; string=&quot;%syslogtag%.%syslogfacility-text%.%syslogpriority-text%&quot;)
+
+action(type=&quot;omrabbitmq&quot;
+       host=&quot;localhost&quot;
+       virtual_host=&quot;/&quot;
+       user=&quot;guest&quot;
+       password=&quot;guest&quot;
+       exchange=&quot;syslog&quot;
+       routing_key_template=&quot;rkTpl&quot;
+       template_body=&quot;&quot;)
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-3">
+<h3>Example 3<a class="headerlink" href="#example-3" title="Permalink to this headline">¶</a></h3>
+<p>HA action :</p>
+<ul class="simple">
+<li>High Availability between <cite>server1:5672</cite> and <cite>server2:1234</cite></li>
+<li>The routing-key is computed</li>
+<li>The sent message is formatted using RSYSLOG_ForwardFormat standard template</li>
+</ul>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module(load=&#39;omrabbitmq&#39;)
+template(name=&quot;rkTpl&quot; type=&quot;string&quot; string=&quot;%syslogtag%.%syslogfacility-text%.%syslogpriority-text%&quot;)
+
+action(type=&quot;omrabbitmq&quot;
+       host=&quot;server1 server2:1234&quot;
+       virtual_host=&quot;production&quot;
+       user=&quot;guest&quot;
+       password=&quot;guest&quot;
+       exchange=&quot;syslog&quot;
+       routing_key_template=&quot;rkTpl&quot;
+       template_body=&quot;RSYSLOG_ForwardFormat&quot;)
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">omrabbitmq: RabbitMQ output module</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#compile">Compile</a></li>
+<li><a class="reference internal" href="#configuration-parameters">Configuration Parameters</a><ul>
+<li><a class="reference internal" href="#action-parameters">Action Parameters</a><ul>
+<li><a class="reference internal" href="#host">host</a></li>
+<li><a class="reference internal" href="#port">port</a></li>
+<li><a class="reference internal" href="#virtual-host">virtual_host</a></li>
+<li><a class="reference internal" href="#user">user</a></li>
+<li><a class="reference internal" href="#password">password</a></li>
+<li><a class="reference internal" href="#exchange">exchange</a></li>
+<li><a class="reference internal" href="#routing-key">routing_key</a></li>
+<li><a class="reference internal" href="#routing-key-template">routing_key_template</a></li>
+<li><a class="reference internal" href="#body-template">body_template</a></li>
+<li><a class="reference internal" href="#delivery-mode">delivery_mode</a></li>
+<li><a class="reference internal" href="#expiration">expiration</a></li>
+<li><a class="reference internal" href="#populate-properties">populate_properties</a></li>
+<li><a class="reference internal" href="#content-type">content_type</a></li>
+<li><a class="reference internal" href="#declare-exchange">declare_exchange</a></li>
+<li><a class="reference internal" href="#recover-policy">recover_policy</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ha-configuration">HA configuration</a></li>
+<li><a class="reference internal" href="#examples">Examples</a><ul>
+<li><a class="reference internal" href="#example-1">Example 1</a></li>
+<li><a class="reference internal" href="#example-2">Example 2</a></li>
+<li><a class="reference internal" href="#example-3">Example 3</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="omprog.html"
+                        title="previous chapter">omprog: Program integration Output module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="omrelp.html"
+                        title="next chapter">omrelp: RELP Output Module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/configuration/modules/omrabbitmq.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/configuration/modules/omrabbitmq.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="omrelp.html" title="omrelp: RELP Output Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="omprog.html" title="omprog: Program integration Output module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_output.html" >Output Modules</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

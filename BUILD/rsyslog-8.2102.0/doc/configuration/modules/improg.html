@@ -1,0 +1,385 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>improg: Program integration input module &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="impstats: Generate Periodic Statistics of Internal Counters" href="impstats.html" />
+    <link rel="prev" title="Impcap: network traffic capture" href="impcap.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="impstats.html" title="impstats: Generate Periodic Statistics of Internal Counters"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="impcap.html" title="Impcap: network traffic capture"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" accesskey="U">Input Modules</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="improg-program-integration-input-module">
+<h1>improg: Program integration input module<a class="headerlink" href="#improg-program-integration-input-module" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="86%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Module Name:</strong></td>
+<td><strong>improg</strong></td>
+</tr>
+<tr class="row-even"><td><strong>Authors:</strong></td>
+<td>Jean-Philippe Hilaire &lt;<a class="reference external" href="mailto:jean-philippe&#46;hilaire&#37;&#52;&#48;pmu&#46;fr">jean-philippe<span>&#46;</span>hilaire<span>&#64;</span>pmu<span>&#46;</span>fr</a>&gt; &amp; Philippe Duveau &lt;<a class="reference external" href="mailto:philippe&#46;duveau&#37;&#52;&#48;free&#46;fr">philippe<span>&#46;</span>duveau<span>&#64;</span>free<span>&#46;</span>fr</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>This module allows rsyslog to spawn external command(s) and consume message
+from pipe(s) (stdout of the external process).</p>
+<p><strong>Limitation:</strong> <cite>select()</cite> seems not to support usage of <cite>printf(…)</cite> or
+<cite>fprintf(stdout,…)</cite>. Only <cite>write(STDOUT_FILENO,…)</cite> seems to be efficient.</p>
+<p>The imput module consume pipes form all external programs in a mono-threaded
+<cite>runInput</cite> method. This means that data treatments will be serialized.</p>
+<p>Optionally, the module manage the external program through keyword sent to
+it using a second pipe to stdin of the external process.</p>
+<p>An operational sample in C can be found &#64; “github.com/pduveau/jsonperfmon”</p>
+<p>Also a bash’s script is provided as tests/improg-simul.sh. The <cite>echo</cite> and <cite>read</cite> (built-in) can be used to communicate with the module.
+External commands can not be used to communicate. <cite>printf</cite> is unable to send data directly to the module but can used through a variable and <cite>echo</cite>.</p>
+</div>
+<div class="section" id="compile">
+<h2>Compile<a class="headerlink" href="#compile" title="Permalink to this headline">¶</a></h2>
+<p>To successfully compile improg module.</p>
+<blockquote>
+<div>./configure –enable-improg …</div></blockquote>
+</div>
+<div class="section" id="configuration-parameters">
+<h2>Configuration Parameters<a class="headerlink" href="#configuration-parameters" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="action-parameters">
+<h3>Action Parameters<a class="headerlink" href="#action-parameters" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="binary">
+<h4>Binary<a class="headerlink" href="#binary" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>yes</td>
+<td>command arguments…</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>Command line : external program and arguments</p>
+</div>
+<div class="section" id="tag">
+<h4>Tag<a class="headerlink" href="#tag" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>yes</td>
+<td>&#160;</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>The tag to be assigned to messages read from this file. If you would like to
+see the colon after the tag, you need to include it when you assign a tag
+value, like so: <code class="docutils literal notranslate"><span class="pre">tag=&quot;myTagValue:&quot;</span></code>.</p>
+</div>
+<div class="section" id="facility">
+<h4>Facility<a class="headerlink" href="#facility" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>facility|number</td>
+<td>local0</td>
+</tr>
+</tbody>
+</table>
+<p>The syslog facility to be assigned to messages read from this file. Can be
+specified in textual form (e.g. <code class="docutils literal notranslate"><span class="pre">local0</span></code>, <code class="docutils literal notranslate"><span class="pre">local1</span></code>, …) or as numbers (e.g.
+16 for <code class="docutils literal notranslate"><span class="pre">local0</span></code>). Textual form is suggested.</p>
+</div>
+<div class="section" id="severity">
+<h4>Severity<a class="headerlink" href="#severity" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>severity|number</td>
+<td>notice</td>
+</tr>
+</tbody>
+</table>
+<p>The syslog severity to be assigned to lines read. Can be specified
+in textual   form (e.g. <code class="docutils literal notranslate"><span class="pre">info</span></code>, <code class="docutils literal notranslate"><span class="pre">warning</span></code>, …) or as numbers (e.g. 6
+for <code class="docutils literal notranslate"><span class="pre">info</span></code>). Textual form is suggested.</p>
+</div>
+<div class="section" id="confirmmessages">
+<h4>confirmMessages<a class="headerlink" href="#confirmmessages" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>no</td>
+<td>on|off</td>
+<td>on</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies whether the external program needs feedback from rsyslog via stdin.
+When this switch is set to “on”, rsyslog confirms each received message.
+This feature facilitates error handling: instead of having to implement a retry
+logic, the external program can rely on the rsyslog queueing capabilities.
+The program receives a line with the word <code class="docutils literal notranslate"><span class="pre">ACK</span></code> from its standard input.</p>
+<p>Also, the program receives a <code class="docutils literal notranslate"><span class="pre">STOP</span></code> when rsyslog ask the module to stop.</p>
+</div>
+<div class="section" id="signalonclose">
+<h4>signalOnClose<a class="headerlink" href="#signalonclose" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>no</td>
+<td>on|off</td>
+<td>off</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies whether a TERM signal must be sent to the external program before
+closing it (when either the worker thread has been unscheduled, a restart
+of the program is being forced, or rsyslog is about to shutdown).</p>
+</div>
+<div class="section" id="closetimeout">
+<h4>closeTimeout<a class="headerlink" href="#closetimeout" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>number</td>
+<td>no</td>
+<td>&#160;</td>
+<td>200</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies whether a KILL signal must be sent to the external program in case
+it does not terminate within the timeout indicated by <a class="reference internal" href="#closetimeout">closeTimeout</a>
+(when either the worker thread has been unscheduled, a restart of the program
+is being forced, or rsyslog is about to shutdown).</p>
+</div>
+<div class="section" id="killunresponsive">
+<h4>killUnresponsive<a class="headerlink" href="#killunresponsive" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>no</td>
+<td>on|off</td>
+<td>on</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies whether a KILL signal must be sent to the external program in case
+it does not terminate within the timeout indicated by closeTimeout
+(when either the worker thread has been unscheduled, a restart of the program
+is being forced, or rsyslog is about to shutdown).</p>
+</div>
+</div>
+</div>
+<div class="section" id="stop-sequence">
+<h2>Stop sequence<a class="headerlink" href="#stop-sequence" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>If <cite>confirmMessages</cite> is set to on, a <cite>STOP</cite> is written in stdin of the child.</li>
+<li>If <cite>signalOnClose</cite> is set to “on”, a TERM signal is sent to the child.</li>
+<li>The pipes with the child process are closed (the child will receive EOF on stdin),</li>
+<li>Then, rsyslog waits for the child process to terminate during closeTimeout,</li>
+<li>If the child has not terminated within the timeout, a KILL signal is sent to it.</li>
+</ol>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">improg: Program integration input module</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#compile">Compile</a></li>
+<li><a class="reference internal" href="#configuration-parameters">Configuration Parameters</a><ul>
+<li><a class="reference internal" href="#action-parameters">Action Parameters</a><ul>
+<li><a class="reference internal" href="#binary">Binary</a></li>
+<li><a class="reference internal" href="#tag">Tag</a></li>
+<li><a class="reference internal" href="#facility">Facility</a></li>
+<li><a class="reference internal" href="#severity">Severity</a></li>
+<li><a class="reference internal" href="#confirmmessages">confirmMessages</a></li>
+<li><a class="reference internal" href="#signalonclose">signalOnClose</a></li>
+<li><a class="reference internal" href="#closetimeout">closeTimeout</a></li>
+<li><a class="reference internal" href="#killunresponsive">killUnresponsive</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#stop-sequence">Stop sequence</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="impcap.html"
+                        title="previous chapter">Impcap: network traffic capture</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="impstats.html"
+                        title="next chapter">impstats: Generate Periodic Statistics of Internal Counters</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/configuration/modules/improg.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/configuration/modules/improg.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="impstats.html" title="impstats: Generate Periodic Statistics of Internal Counters"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="impcap.html" title="Impcap: network traffic capture"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" >Input Modules</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

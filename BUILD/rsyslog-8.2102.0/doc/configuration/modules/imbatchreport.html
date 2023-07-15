@@ -1,0 +1,438 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>imbatchreport: Batch report input module &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="imdocker: Docker Input Module" href="imdocker.html" />
+    <link rel="prev" title="im3195: RFC3195 Input Module" href="im3195.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="imdocker.html" title="imdocker: Docker Input Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="im3195.html" title="im3195: RFC3195 Input Module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" accesskey="U">Input Modules</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="imbatchreport-batch-report-input-module">
+<h1>imbatchreport: Batch report input module<a class="headerlink" href="#imbatchreport-batch-report-input-module" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="86%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Module Name:</strong></td>
+<td><strong>imbatchreport</strong></td>
+</tr>
+<tr class="row-even"><td><strong>Authors:</strong></td>
+<td>Jean-Philippe Hilaire &lt;<a class="reference external" href="mailto:jean-philippe&#46;hilaire&#37;&#52;&#48;pmu&#46;fr">jean-philippe<span>&#46;</span>hilaire<span>&#64;</span>pmu<span>&#46;</span>fr</a>&gt; &amp; Philippe Duveau &lt;<a class="reference external" href="mailto:philippe&#46;duveau&#37;&#52;&#48;free&#46;fr">philippe<span>&#46;</span>duveau<span>&#64;</span>free<span>&#46;</span>fr</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>This module allows rsyslog to manage batch reports.</p>
+<p>Batch are programs launched successively to process a large amount of
+information. These programs are organized in stages with passing conditions.
+The batch ends with a global execution summary. Each Batch produces a single
+result file usually named with the name of the batch and its date of execution.</p>
+<p>Those files have sense only when they are complete in one log. When the file is
+collected it becomes useless and, as a statefile, should be deleted or renamed.</p>
+<p>This module handle those characteristics :</p>
+<ul class="simple">
+<li>reads the complete file,</li>
+<li>extracts the structured data from the file (see managing structured data),</li>
+<li>transmit the message to output module(s),</li>
+<li>action is applied to the file to flag it as treated. Two different actions can be applied: delete or rename the file.</li>
+</ul>
+<p>If the file is too large to be handled in the message size defined by rsyslog,
+the file is renamed as a “rejected file”. See $maxMessageSize</p>
+<p><strong>Managing structured data</strong></p>
+<p>As part of the batch summary, the structure data can be provided in the batch
+report file as the last part of the file.</p>
+<p>The last non-space char has to be a closing brace ‘]’ then all chars between
+this char up to the closest opening brace ‘[‘ are computed as structured data.</p>
+<p>All the structured data has to be contained in the last 150 chars of the file.</p>
+<p>In general, structured data should contain the batch name (program) and the
+start timestamp. Those two values can be extract to fill rsyslog message
+attributes.</p>
+</div>
+<div class="section" id="compile">
+<h2>Compile<a class="headerlink" href="#compile" title="Permalink to this headline">¶</a></h2>
+<p>To successfully compile imbatchreport module.</p>
+<blockquote>
+<div>./configure –enable-imbatchreport …</div></blockquote>
+</div>
+<div class="section" id="configuration-parameters">
+<h2>Configuration Parameters<a class="headerlink" href="#configuration-parameters" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="action-parameters">
+<h3>Action Parameters<a class="headerlink" href="#action-parameters" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="reports">
+<h4>Reports<a class="headerlink" href="#reports" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>yes</td>
+<td>glob definition</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>Glob definition used to identify reports to manage.</p>
+</div>
+<div class="section" id="tag">
+<h4>Tag<a class="headerlink" href="#tag" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>yes</td>
+<td>&#160;</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>The tag to be assigned to messages read from this file. If you would like to
+see the colon after the tag, you need to include it when you assign a tag
+value, like so: <code class="docutils literal notranslate"><span class="pre">tag=&quot;myTagValue:&quot;</span></code>.</p>
+</div>
+<div class="section" id="facility">
+<h4>Facility<a class="headerlink" href="#facility" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>facility|number</td>
+<td>local0</td>
+</tr>
+</tbody>
+</table>
+<p>The syslog facility to be assigned to messages read from this file. Can be
+specified in textual form (e.g. <code class="docutils literal notranslate"><span class="pre">local0</span></code>, <code class="docutils literal notranslate"><span class="pre">local1</span></code>, …) or as numbers (e.g.
+16 for <code class="docutils literal notranslate"><span class="pre">local0</span></code>). Textual form is suggested.</p>
+</div>
+<div class="section" id="severity">
+<h4>Severity<a class="headerlink" href="#severity" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>severity|number</td>
+<td>notice</td>
+</tr>
+</tbody>
+</table>
+<p>The syslog severity to be assigned to lines read. Can be specified
+in textual   form (e.g. <code class="docutils literal notranslate"><span class="pre">info</span></code>, <code class="docutils literal notranslate"><span class="pre">warning</span></code>, …) or as numbers (e.g. 6
+for <code class="docutils literal notranslate"><span class="pre">info</span></code>). Textual form is suggested.</p>
+</div>
+<div class="section" id="deduplicatespaces">
+<h4>DeduplicateSpaces<a class="headerlink" href="#deduplicatespaces" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>no</td>
+<td>&#160;</td>
+<td>on</td>
+</tr>
+</tbody>
+</table>
+<p>The parameter modify the way consecutive spaces like chars are managed.
+When it is setted to “on”, consecutive spaces like chars are reduced to a single one
+and trailing space like chars are suppressed.</p>
+</div>
+<div class="section" id="delete">
+<h4>Delete<a class="headerlink" href="#delete" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>&lt;regex&gt; &lt;reject&gt;</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>This parameter informs the module to delete the report to flag it as treated.
+If the file is too large (or failed to be removed) it is renamed using the
+&lt;regex&gt; to identify part of the file name that has to be replaced it by
+&lt;reject&gt;. See Examples</p>
+</div>
+<div class="section" id="rename">
+<h4>Rename<a class="headerlink" href="#rename" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>&lt;regex&gt; &lt;sent&gt; &lt;reject&gt;</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>This parameter informs the module to rename the report to flag it as treated.
+The file is renamed using the &lt;regex&gt; to identify part of the file name that
+has to be replaced it:</p>
+<ul class="simple">
+<li>by &lt;rename&gt; if the file was successfully treated,</li>
+<li>by &lt;reject&gt; if the file is too large to be sent.</li>
+</ul>
+<p>See #Examples</p>
+</div>
+<div class="section" id="programkey">
+<h4>Programkey<a class="headerlink" href="#programkey" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>The attribute in structured data which contains the rsyslog APPNAME.
+This attribute has to be a String between double quotes (“).</p>
+</div>
+<div class="section" id="timestampkey">
+<h4>Timestampkey<a class="headerlink" href="#timestampkey" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>The attribute in structured data which contains the rsyslog TIMESTAMP.
+This attribute has to be a Number (Unix TimeStamp).</p>
+</div>
+</div>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>The example show the delete action. All files corresponding to
+“/test/*.ok” will be treated as batch reports and will be deleted
+on success or renamed from &lt;file&gt;.ok to &lt;file&gt;.rejected in other
+cases.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module(load=&quot;imbatchreport&quot;)
+input(type=&quot;imbatchreport&quot; reports=&quot;/test/\*.ok&quot;
+      ruleset=&quot;myruleset&quot; tag=&quot;batch&quot;
+      delete=&quot;.ok$ .rejected&quot;
+      programkey=&quot;SHELL&quot; timestampkey=&quot;START&quot;
+   )
+</pre></div>
+</div>
+<p>The example show the rename action. All files corresponding to
+“/test/*.ok” will be treated as batch reports and will be renamed
+from &lt;file&gt;.ok to &lt;file&gt;.sent on success or
+renamed from &lt;file&gt;.ok to &lt;file&gt;.rejected in other cases.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module(load=&quot;imbatchreport&quot;)
+input(type=&quot;imbatchreport&quot; reports=&quot;/test/\*.ok&quot;
+      ruleset=&quot;myruleset&quot; tag=&quot;batch&quot;
+      rename=&quot;.ok$ .sent .rejected&quot;
+      programkey=&quot;SHELL&quot; timestampkey=&quot;START&quot;
+   )
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">imbatchreport: Batch report input module</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#compile">Compile</a></li>
+<li><a class="reference internal" href="#configuration-parameters">Configuration Parameters</a><ul>
+<li><a class="reference internal" href="#action-parameters">Action Parameters</a><ul>
+<li><a class="reference internal" href="#reports">Reports</a></li>
+<li><a class="reference internal" href="#tag">Tag</a></li>
+<li><a class="reference internal" href="#facility">Facility</a></li>
+<li><a class="reference internal" href="#severity">Severity</a></li>
+<li><a class="reference internal" href="#deduplicatespaces">DeduplicateSpaces</a></li>
+<li><a class="reference internal" href="#delete">Delete</a></li>
+<li><a class="reference internal" href="#rename">Rename</a></li>
+<li><a class="reference internal" href="#programkey">Programkey</a></li>
+<li><a class="reference internal" href="#timestampkey">Timestampkey</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="im3195.html"
+                        title="previous chapter">im3195: RFC3195 Input Module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="imdocker.html"
+                        title="next chapter">imdocker: Docker Input Module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/configuration/modules/imbatchreport.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/configuration/modules/imbatchreport.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="imdocker.html" title="imdocker: Docker Input Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="im3195.html" title="im3195: RFC3195 Input Module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" >Input Modules</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

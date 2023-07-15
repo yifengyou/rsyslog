@@ -1,0 +1,503 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Impcap: network traffic capture &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="improg: Program integration input module" href="improg.html" />
+    <link rel="prev" title="immark: Mark Message Input Module" href="immark.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="improg.html" title="improg: Program integration input module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="immark.html" title="immark: Mark Message Input Module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" accesskey="U">Input Modules</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="impcap-network-traffic-capture">
+<h1>Impcap: network traffic capture<a class="headerlink" href="#impcap-network-traffic-capture" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="35%" />
+<col width="65%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Module Name:</strong></td>
+<td><strong>impcap</strong></td>
+</tr>
+<tr class="row-even"><td><strong>Author:</strong></td>
+<td>Theo Bertin &lt;<a class="reference external" href="mailto:theo&#46;bertin&#37;&#52;&#48;advens&#46;fr">theo<span>&#46;</span>bertin<span>&#64;</span>advens<span>&#46;</span>fr</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>Impcap is an input module based upon <a class="reference external" href="https://www.tcpdump.org/">tcpdump’s libpcap</a> library for network traffic capture.</p>
+<p>Its goal is to capture network traffic with efficiency, parse network packets metadata AND data, and allow users/modules
+to make full use of it.</p>
+</div>
+<div class="section" id="configuration-parameters">
+<h2>Configuration Parameters<a class="headerlink" href="#configuration-parameters" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Parameter names are case-insensitive</p>
+</div>
+<div class="section" id="module-parameter">
+<h3>Module Parameter<a class="headerlink" href="#module-parameter" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="metadata-container">
+<h4>metadata_container<a class="headerlink" href="#metadata-container" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>word</td>
+<td>!impcap</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Defines the container to place all the parsed metadata of the network packet.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">if overwritten, this parameter should always begin with ‘!’ to define the JSON object accompanying messages. No checks are done to ensure that
+and not complying with this rule will prevent impcap/rsyslog from running, or will result in unexpected behaviours.</p>
+</div>
+</div>
+<div class="section" id="data-container">
+<h4>data_container<a class="headerlink" href="#data-container" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>word</td>
+<td>!data</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Defines the container to place all the data of the network packet. ‘data’ here defines everything above transport layer
+in the OSI model, and is a string representation of the hexadecimal values of the stream.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">if overwritten, this parameter should always begin with ‘!’ to define the JSON object accompanying messages. No checks are done to ensure that
+and not complying with this rule will prevent impcap/rsyslog from running, or will result in unexpected behaviours.</p>
+</div>
+</div>
+<div class="section" id="snap-length">
+<h4>snap_length<a class="headerlink" href="#snap-length" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>number</td>
+<td>65535</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Defines the maximum size of captured packets.
+If captured packets are longer than the defined value, they will be capped.
+Default value allows any type of packet to be captured entirely but can be much shorter if only metadata capture is
+desired (500 to 2000 should still be safe, depending on network protocols).
+Be warry though, as impcap won’t be able to parse metadata correctly if the value is not high enough.</p>
+</div>
+</div>
+<div class="section" id="input-parameters">
+<h3>Input Parameters<a class="headerlink" href="#input-parameters" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="interface">
+<h4>interface<a class="headerlink" href="#interface" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>word</td>
+<td>none</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>This parameter specifies the network interface to listen to. <strong>If ‘interface’ is not specified, ‘file’ must be in order
+for the module to run.</strong></p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The name must be a valid network interface on the system (such as ‘lo’).
+see <a class="reference internal" href="#supported-interface-types"><span class="std std-ref">Supported interface types</span></a> for an exhaustive list of all supported interface link-layer types.</p>
+</div>
+</div>
+<div class="section" id="file">
+<h4>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>word</td>
+<td>none</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>This parameter specifies a pcap file to read.
+The file must respect the <a class="reference external" href="https://www.tcpdump.org/pcap/pcap.html">pcap file format specification</a>. <strong>If ‘file’ is not specified, ‘interface’ must be in order
+for the module to run.</strong></p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This functionality is not intended for production environnments,
+it is designed for development/tests.</p>
+</div>
+</div>
+<div class="section" id="promiscuous">
+<h4>promiscuous<a class="headerlink" href="#promiscuous" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>boolean</td>
+<td>off</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>When a valid interface is provided, sets the capture to promiscuous for this interface.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Setting your network interface to promiscuous can come against your local laws and
+regulations, maintainers cannot be held responsible for improper use of the module.</p>
+</div>
+</div>
+<div class="section" id="filter">
+<h4>filter<a class="headerlink" href="#filter" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>none</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Set a filter for the capture.
+Filter semantics are defined <a class="reference external" href="https://www.tcpdump.org/manpages/pcap-filter.7.html">on pcap manpages</a>.</p>
+</div>
+<div class="section" id="tag">
+<h4>tag<a class="headerlink" href="#tag" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>word</td>
+<td>none</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Set a tag to messages coming from this input.</p>
+</div>
+<div class="section" id="ruleset">
+<h4>ruleset<a class="headerlink" href="#ruleset" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>word</td>
+<td>none</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Assign messages from thi simput to a specific Rsyslog ruleset.</p>
+</div>
+<div class="section" id="no-buffer">
+<span id="id1"></span><h4>no_buffer<a class="headerlink" href="#no-buffer" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>boolean</td>
+<td>off</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Disable buffering during capture.
+By default, impcap asks the system to bufferize packets (see parameters <a class="reference internal" href="#buffer-size"><span class="std std-ref">buffer_size</span></a>, <a class="reference internal" href="#buffer-timeout"><span class="std std-ref">buffer_timeout</span></a> and
+<a class="reference internal" href="#packet-count"><span class="std std-ref">packet_count</span></a>), this parameter disables buffering completely. This means packets will be handled as soon as they
+arrive, but impcap will make more system calls to get them and might miss some depending on the incoming rate and system
+performances.</p>
+</div>
+<div class="section" id="buffer-size">
+<span id="id2"></span><h4>buffer_size<a class="headerlink" href="#buffer-size" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>number (octets)</td>
+<td>15740640</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Set a buffer size in bytes to the capture handle.
+This parameter is only relevant when <a class="reference internal" href="#no-buffer"><span class="std std-ref">no_buffer</span></a> is not active, and should be set depending on input packet rates,
+<a class="reference internal" href="#buffer-timeout"><span class="std std-ref">buffer_timeout</span></a> and <a class="reference internal" href="#packet-count"><span class="std std-ref">packet_count</span></a> values.</p>
+</div>
+<div class="section" id="buffer-timeout">
+<span id="id3"></span><h4>buffer_timeout<a class="headerlink" href="#buffer-timeout" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>number (ms)</td>
+<td>10</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Set a timeout in milliseconds between two system calls to get bufferized packets. This parameter prevents low input rate
+interfaces to keep packets in buffers for too long, but does not guarantee fetch every X seconds (see <a class="reference external" href="https://www.tcpdump.org/manpages/pcap.3pcap.html">pcap manpage</a> for more details).</p>
+</div>
+<div class="section" id="packet-count">
+<span id="id4"></span><h4>packet_count<a class="headerlink" href="#packet-count" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>number</td>
+<td>5</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Set a maximum number of packets to process at a time. This parameter allows to limit batch calls to a maximum of X
+packets at a time.</p>
+</div>
+</div>
+</div>
+<div class="section" id="supported-interface-types">
+<span id="id5"></span><h2>Supported interface types<a class="headerlink" href="#supported-interface-types" title="Permalink to this headline">¶</a></h2>
+<p>Impcap currently supports IEEE 802.3 Ethernet link-layer type interfaces.
+Please contact the maintainer if you need a different interface type !</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Impcap: network traffic capture</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#configuration-parameters">Configuration Parameters</a><ul>
+<li><a class="reference internal" href="#module-parameter">Module Parameter</a><ul>
+<li><a class="reference internal" href="#metadata-container">metadata_container</a></li>
+<li><a class="reference internal" href="#data-container">data_container</a></li>
+<li><a class="reference internal" href="#snap-length">snap_length</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#input-parameters">Input Parameters</a><ul>
+<li><a class="reference internal" href="#interface">interface</a></li>
+<li><a class="reference internal" href="#file">file</a></li>
+<li><a class="reference internal" href="#promiscuous">promiscuous</a></li>
+<li><a class="reference internal" href="#filter">filter</a></li>
+<li><a class="reference internal" href="#tag">tag</a></li>
+<li><a class="reference internal" href="#ruleset">ruleset</a></li>
+<li><a class="reference internal" href="#no-buffer">no_buffer</a></li>
+<li><a class="reference internal" href="#buffer-size">buffer_size</a></li>
+<li><a class="reference internal" href="#buffer-timeout">buffer_timeout</a></li>
+<li><a class="reference internal" href="#packet-count">packet_count</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#supported-interface-types">Supported interface types</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="immark.html"
+                        title="previous chapter">immark: Mark Message Input Module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="improg.html"
+                        title="next chapter">improg: Program integration input module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/configuration/modules/impcap.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/configuration/modules/impcap.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="improg.html" title="improg: Program integration input module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="immark.html" title="immark: Mark Message Input Module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" >Input Modules</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

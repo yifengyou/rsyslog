@@ -1,0 +1,162 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>$FileCreateMode &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="$FileGroup" href="rsconf1_filegroup.html" />
+    <link rel="prev" title="$DynaFileCacheSize" href="rsconf1_dynafilecachesize.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="rsconf1_filegroup.html" title="$FileGroup"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="rsconf1_dynafilecachesize.html" title="$DynaFileCacheSize"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index_directives.html" >Legacy Configuration Directives</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" accesskey="U">Legacy Action-Specific Configuration Statements</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="filecreatemode">
+<h1>$FileCreateMode<a class="headerlink" href="#filecreatemode" title="Permalink to this headline">¶</a></h1>
+<p><strong>Type:</strong> global configuration parameter</p>
+<p><strong>Default:</strong> 0644</p>
+<p><strong>Description:</strong></p>
+<p>The $FileCreateMode parameter allows to specify the creation mode with
+which rsyslogd creates new files. If not specified, the value 0644 is
+used (which retains backward-compatibility with earlier releases). The
+value given must always be a 4-digit octal number, with the initial
+digit being zero.</p>
+<p>Please note that the actual permission depend on rsyslogd’s process
+umask. If in doubt, use “$umask 0000” right at the beginning of the
+configuration file to remove any restrictions.</p>
+<p>$FileCreateMode may be specified multiple times. If so, it specifies the
+creation mode for all selector lines that follow until the next
+$FileCreateMode parameter. Order of lines is vitally important.</p>
+<p><strong>Sample:</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">$FileCreateMode</span> <span class="pre">0600</span></code></p>
+<p>This sample lets rsyslog create files with read and write access only
+for the users it runs under.</p>
+<p>The following sample is deemed to be a complete rsyslog.conf:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$umask 0000 # make sure nothing interferes with the following definitions
+*.* /var/log/file-with-0644-default
+$FileCreateMode 0600
+*.* /var/log/file-with-0600
+$FileCreateMode 0644
+*.* /var/log/file-with-0644
+</pre></div>
+</div>
+<p>As you can see, open modes depend on position in the config file. Note
+the first line, which is created with the hardcoded default creation
+mode.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="rsconf1_dynafilecachesize.html"
+                        title="previous chapter">$DynaFileCacheSize</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="rsconf1_filegroup.html"
+                        title="next chapter">$FileGroup</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/configuration/action/rsconf1_filecreatemode.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/configuration/action/rsconf1_filecreatemode.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="rsconf1_filegroup.html" title="$FileGroup"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="rsconf1_dynafilecachesize.html" title="$DynaFileCacheSize"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../index_directives.html" >Legacy Configuration Directives</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="index.html" >Legacy Action-Specific Configuration Statements</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

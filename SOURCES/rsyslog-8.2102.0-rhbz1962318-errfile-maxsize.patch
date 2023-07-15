@@ -1,0 +1,190 @@
+--- rsyslog-8.2102.0/action.c	2021-02-15 12:06:16.000000000 +0100
++++ rsyslog-8.2102.0-changes/action.c	2022-03-08 15:55:33.989525382 +0100
+@@ -198,6 +198,7 @@
+ 	{ "name", eCmdHdlrGetWord, 0 }, /* legacy: actionname */
+ 	{ "type", eCmdHdlrString, CNFPARAM_REQUIRED }, /* legacy: actionname */
+ 	{ "action.errorfile", eCmdHdlrString, 0 },
++	{ "action.errorfile.maxsize", eCmdHdlrInt, 0 },
+ 	{ "action.writeallmarkmessages", eCmdHdlrBinary, 0 }, /* legacy: actionwriteallmarkmessages */
+ 	{ "action.execonlyeverynthtime", eCmdHdlrInt, 0 }, /* legacy: actionexeconlyeverynthtime */
+ 	{ "action.execonlyeverynthtimetimeout", eCmdHdlrInt, 0 }, /* legacy: actionexeconlyeverynthtimetimeout */
+@@ -400,6 +401,8 @@
+ 	pThis->iResumeRetryCount = 0;
+ 	pThis->pszName = NULL;
+ 	pThis->pszErrFile = NULL;
++	pThis->maxErrFileSize = 0;
++	pThis->errFileWritten = 0;	
+ 	pThis->pszExternalStateFile = NULL;
+ 	pThis->fdErrFile = -1;
+ 	pThis->bWriteAllMarkMsgs = 1;
+@@ -1436,6 +1439,12 @@
+ 				pThis->pszName, pThis->pszErrFile);
+ 			goto done;
+ 		}
++		struct stat statbuf;
++		if (fstat(pThis->fdErrFile, &statbuf) == -1) {
++			LogError(errno, RS_RET_ERR, "failed to fstat %s", pThis->pszErrFile);
++			goto done;
++		}
++		pThis->errFileWritten += statbuf.st_size;
+ 	}
+ 
+ 	for(int i = 0 ; i < nparams ; ++i) {
+@@ -1454,16 +1463,26 @@
+ 		char *const rendered = strdup((char*)fjson_object_to_json_string(etry));
+ 		if(rendered == NULL)
+ 			goto done;
+-		const size_t toWrite = strlen(rendered) + 1;
+-		/* note: we use the '\0' inside the string to store a LF - we do not
+-		 * otherwise need it and it safes us a copy/realloc.
+-		 */
+-		rendered[toWrite-1] = '\n'; /* NO LONGER A STRING! */
+-		const ssize_t wrRet = write(pThis->fdErrFile, rendered, toWrite);
+-		if(wrRet != (ssize_t) toWrite) {
+-			LogError(errno, RS_RET_IO_ERROR,
+-				"action %s: error writing errorFile %s, write returned %lld",
+-				pThis->pszName, pThis->pszErrFile, (long long) wrRet);
++		size_t toWrite = strlen(rendered) + 1;
++		// Check if need to truncate the amount of bytes to write
++		if (pThis->maxErrFileSize > 0) {
++			if (pThis->errFileWritten + toWrite > pThis->maxErrFileSize) {
++				// Truncate to the pending available
++				toWrite = pThis->maxErrFileSize - pThis->errFileWritten;
++			}
++			pThis->errFileWritten += toWrite;
++		}
++		if(toWrite > 0) {
++			/* note: we use the '\0' inside the string to store a LF - we do not
++			 * otherwise need it and it safes us a copy/realloc.
++			 */
++			rendered[toWrite-1] = '\n'; /* NO LONGER A STRING! */
++			const ssize_t wrRet = write(pThis->fdErrFile, rendered, toWrite);
++			if(wrRet != (ssize_t) toWrite) {
++				LogError(errno, RS_RET_IO_ERROR,
++					"action %s: error writing errorFile %s, write returned %lld",
++					pThis->pszName, pThis->pszErrFile, (long long) wrRet);
++			}
+ 		}
+ 		free(rendered);
+ 
+@@ -2048,6 +2067,8 @@
+ 			continue; /* this is handled seperately during module select! */
+ 		} else if(!strcmp(pblk.descr[i].name, "action.errorfile")) {
+ 			pAction->pszErrFile = es_str2cstr(pvals[i].val.d.estr, NULL);
++		} else if(!strcmp(pblk.descr[i].name, "action.errorfile.maxsize")) {
++			pAction->maxErrFileSize = pvals[i].val.d.n;
+ 		} else if(!strcmp(pblk.descr[i].name, "action.externalstate.file")) {
+ 			pAction->pszExternalStateFile = es_str2cstr(pvals[i].val.d.estr, NULL);
+ 		} else if(!strcmp(pblk.descr[i].name, "action.writeallmarkmessages")) {
+--- rsyslog-8.2102.0-ori/action.h	2020-10-03 19:06:47.000000000 +0200
++++ rsyslog-8.2102.0-changes/action.h	2022-03-04 11:36:47.024588972 +0100
+@@ -77,6 +77,8 @@
+ 	/* error file */
+ 	const char *pszErrFile;
+ 	int fdErrFile;
++	size_t maxErrFileSize;
++	size_t errFileWritten;
+ 	pthread_mutex_t mutErrFile;
+ 	/* external stat file system */
+ 	const char *pszExternalStateFile;
+--- rsyslog-8.2102.0-ori/tests/Makefile.am	2021-02-15 12:06:16.000000000 +0100
++++ rsyslog-8.2102.0-changes/tests/Makefile.am	2022-03-04 11:38:01.625095709 +0100
+@@ -695,7 +695,8 @@
+ 	mysql-actq-mt.sh \
+ 	mysql-actq-mt-withpause.sh \
+ 	action-tx-single-processing.sh \
+-	action-tx-errfile.sh
++	action-tx-errfile.sh \
++	action-tx-errfile-maxsize.sh
+ 
+ mysql-basic.log: mysqld-start.log
+ mysql-basic-cnf6.log: mysqld-start.log
+@@ -2156,6 +2157,8 @@
+ 	sndrcv_omudpspoof_nonstdpt.sh \
+ 	sndrcv_gzip.sh \
+ 	action-tx-single-processing.sh \
++	omfwd-errfile-maxsize.sh \
++	action-tx-errfile-maxsize.sh \
+ 	action-tx-errfile.sh \
+ 	testsuites/action-tx-errfile.result \
+ 	pipeaction.sh \
+--- rsyslog-8.2102.0-ori/tests/omfwd-errfile-maxsize.sh	1970-01-01 01:00:00.000000000 +0100
++++ rsyslog-8.2102.0-changes/tests/omfwd-errfile-maxsize.sh	2022-03-04 11:39:02.060506234 +0100
+@@ -0,0 +1,17 @@
++#!/bin/bash
++# part of the rsyslog project, released under ASL 2.0
++. ${srcdir:=.}/diag.sh init
++
++export MAX_ERROR_SIZE=1999
++
++generate_conf
++add_conf '
++action(type="omfwd" target="1.2.3.4" port="1234" Protocol="tcp" NetworkNamespace="doesNotExist"
++       action.errorfile="'$RSYSLOG2_OUT_LOG'" action.errorfile.maxsize="'$MAX_ERROR_SIZE'")
++'
++startup
++shutdown_when_empty
++wait_shutdown
++check_file_exists ${RSYSLOG2_OUT_LOG}
++file_size_check ${RSYSLOG2_OUT_LOG} ${MAX_ERROR_SIZE}
++exit_test
+--- rsyslog-8.2102.0-ori/tests/action-tx-errfile-maxsize.sh	1970-01-01 01:00:00.000000000 +0100
++++ rsyslog-8.2102.0-changes/tests/action-tx-errfile-maxsize.sh	2022-03-04 11:59:22.592796989 +0100
+@@ -0,0 +1,35 @@
++#!/bin/bash
++# part of the rsyslog project, released under ASL 2.0
++
++. ${srcdir:=.}/diag.sh init
++
++export NUMMESSAGES=50 # enough to generate big file
++export MAX_ERROR_SIZE=100
++
++generate_conf
++add_conf '
++$ModLoad ../plugins/ommysql/.libs/ommysql
++global(errormessagestostderr.maxnumber="5")
++
++template(type="string" name="tpl" string="insert into SystemEvents (Message, Facility) values (\"%msg%\", %$!facility%)" option.sql="on")
++
++if((not($msg contains "error")) and ($msg contains "msgnum:")) then {
++	set $.num = field($msg, 58, 2);
++	if $.num % 2 == 0 then {
++		set $!facility = $syslogfacility;
++	} else {
++		set $/cntr = 0;
++	}
++	action(type="ommysql" name="mysql_action_errfile_maxsize" server="127.0.0.1" template="tpl"
++	       db="'$RSYSLOG_DYNNAME'" uid="rsyslog" pwd="testbench" action.errorfile="'$RSYSLOG2_OUT_LOG'" action.errorfile.maxsize="'$MAX_ERROR_SIZE'")
++}
++'
++mysql_prep_for_test
++startup
++injectmsg
++shutdown_when_empty
++wait_shutdown
++mysql_get_data
++check_file_exists ${RSYSLOG2_OUT_LOG}
++file_size_check ${RSYSLOG2_OUT_LOG} ${MAX_ERROR_SIZE}
++exit_test
+--- rsyslog-8.2102.0/tests/omfwd-errfile-maxsize-filled.sh	1970-01-01 01:00:00.000000000 +0100
++++ rsyslog-8.2102.0-changes/tests/omfwd-errfile-maxsize-filled.sh	2022-03-08 16:24:01.174365289 +0100
+@@ -0,0 +1,19 @@
++#!/bin/bash
++# part of the rsyslog project, released under ASL 2.0
++. ${srcdir:=.}/diag.sh init
++ERRFILE=$(mktemp)
++export MAX_ERROR_SIZE=1999
++export INITIAL_FILE_SIZE=$((MAX_ERROR_SIZE - 100))
++dd if=/dev/urandom of=${ERRFILE}  bs=1 count=${INITIAL_FILE_SIZE}
++generate_conf
++add_conf '
++action(type="omfwd" target="1.2.3.4" port="1234" Protocol="tcp" NetworkNamespace="doesNotExist"
++       action.errorfile="'$ERRFILE'" action.errorfile.maxsize="'$MAX_ERROR_SIZE'")
++'
++startup
++shutdown_when_empty
++wait_shutdown
++check_file_exists ${ERRFILE}
++file_size_check ${ERRFILE} ${MAX_ERROR_SIZE}
++exit_test
++rm ${ERRFILE}

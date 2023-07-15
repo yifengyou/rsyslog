@@ -1,0 +1,357 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>imtuxedoulog: Tuxedo ULOG input module &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="imudp: UDP Syslog Input Module" href="imudp.html" />
+    <link rel="prev" title="imtcp: TCP Syslog Input Module" href="imtcp.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="imudp.html" title="imudp: UDP Syslog Input Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="imtcp.html" title="imtcp: TCP Syslog Input Module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" accesskey="U">Input Modules</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="imtuxedoulog-tuxedo-ulog-input-module">
+<h1>imtuxedoulog: Tuxedo ULOG input module<a class="headerlink" href="#imtuxedoulog-tuxedo-ulog-input-module" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="86%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Module Name:</strong></td>
+<td><strong>imtuxedoulog</strong></td>
+</tr>
+<tr class="row-even"><td><strong>Authors:</strong></td>
+<td>Jean-Philippe Hilaire &lt;<a class="reference external" href="mailto:jean-philippe&#46;hilaire&#37;&#52;&#48;pmu&#46;fr">jean-philippe<span>&#46;</span>hilaire<span>&#64;</span>pmu<span>&#46;</span>fr</a>&gt; &amp; Philippe Duveau &lt;<a class="reference external" href="mailto:philippe&#46;duveau&#37;&#52;&#48;free&#46;fr">philippe<span>&#46;</span>duveau<span>&#64;</span>free<span>&#46;</span>fr</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>This module allows rsyslog to process Tuxedo ULOG files.
+Tuxedo create an ULOG file each new log of the day this file is defined</p>
+<ul class="simple">
+<li>a prefix configured in the tuxedo configuration</li>
+<li>a suffix based on the date “.MMDDYY”</li>
+</ul>
+<p>This module is a copy of the polling mode of imfile but the file name is
+computed each polling. The previous one is closed to limit the number of
+opened file descriptor simultaneously.</p>
+<p>Another particularity of ULOG is that the lines contains only the time in
+day. So the module use the date in filename and time in log to fill log
+timestamp.</p>
+</div>
+<div class="section" id="compile">
+<h2>Compile<a class="headerlink" href="#compile" title="Permalink to this headline">¶</a></h2>
+<p>To successfully compile improg module.</p>
+<blockquote>
+<div>./configure –enable-imtuxedoulog …</div></blockquote>
+</div>
+<div class="section" id="configuration-parameters">
+<h2>Configuration Parameters<a class="headerlink" href="#configuration-parameters" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="action-parameters">
+<h3>Action Parameters<a class="headerlink" href="#action-parameters" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="ulogbase">
+<h4>ulogbase<a class="headerlink" href="#ulogbase" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>yes</td>
+<td>path of ULOG file</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>Path of ULOG file as it is defined in Tuxedo Configuration ULOGPFX.
+Dot and date is added a end to build full file path</p>
+</div>
+<div class="section" id="tag">
+<h4>Tag<a class="headerlink" href="#tag" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>yes</td>
+<td>&#160;</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>The tag to be assigned to messages read from this file. If you would like to
+see the colon after the tag, you need to include it when you assign a tag
+value, like so: <code class="docutils literal notranslate"><span class="pre">tag=&quot;myTagValue:&quot;</span></code>.</p>
+</div>
+<div class="section" id="facility">
+<h4>Facility<a class="headerlink" href="#facility" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>facility|number</td>
+<td>local0</td>
+</tr>
+</tbody>
+</table>
+<p>The syslog facility to be assigned to messages read from this file. Can be
+specified in textual form (e.g. <code class="docutils literal notranslate"><span class="pre">local0</span></code>, <code class="docutils literal notranslate"><span class="pre">local1</span></code>, …) or as numbers (e.g.
+16 for <code class="docutils literal notranslate"><span class="pre">local0</span></code>). Textual form is suggested.</p>
+</div>
+<div class="section" id="severity">
+<h4>Severity<a class="headerlink" href="#severity" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>severity|number</td>
+<td>notice</td>
+</tr>
+</tbody>
+</table>
+<p>The syslog severity to be assigned to lines read. Can be specified
+in textual   form (e.g. <code class="docutils literal notranslate"><span class="pre">info</span></code>, <code class="docutils literal notranslate"><span class="pre">warning</span></code>, …) or as numbers (e.g. 6
+for <code class="docutils literal notranslate"><span class="pre">info</span></code>). Textual form is suggested.</p>
+</div>
+<div class="section" id="persiststateinterval">
+<h4>PersistStateInterval<a class="headerlink" href="#persiststateinterval" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>integer</td>
+<td>0</td>
+<td>no</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies how often the state file shall be written when processing
+the input file. The <strong>default</strong> value is 0, which means a new state
+file is only written when the monitored files is being closed (end of
+rsyslogd execution). Any other value n means that the state file is
+written every time n file lines have been processed. This setting can
+be used to guard against message duplication due to fatal errors
+(like power fail). Note that this setting affects imfile performance,
+especially when set to a low value. Frequently writing the state file
+is very time consuming.</p>
+</div>
+<div class="section" id="maxlinesatonce">
+<h4>MaxLinesAtOnce<a class="headerlink" href="#maxlinesatonce" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>integer</td>
+<td>0</td>
+<td>no</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>If set to 0, the file will be fully processed. If it is set to any other
+value, a maximum of [number] lines is processed in sequence. The <strong>default</strong>
+is 10240.</p>
+</div>
+<div class="section" id="maxsubmitatonce">
+<h4>MaxSubmitAtOnce<a class="headerlink" href="#maxsubmitatonce" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>integer</td>
+<td>1024</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>This is an expert option. It can be used to set the maximum input
+batch size that the module can generate. The <strong>default</strong> is 1024, which
+is suitable for a wide range of applications. Be sure to understand
+rsyslog message batch processing before you modify this option. If
+you do not know what this doc here talks about, this is a good
+indication that you should NOT modify the default.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">imtuxedoulog: Tuxedo ULOG input module</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#compile">Compile</a></li>
+<li><a class="reference internal" href="#configuration-parameters">Configuration Parameters</a><ul>
+<li><a class="reference internal" href="#action-parameters">Action Parameters</a><ul>
+<li><a class="reference internal" href="#ulogbase">ulogbase</a></li>
+<li><a class="reference internal" href="#tag">Tag</a></li>
+<li><a class="reference internal" href="#facility">Facility</a></li>
+<li><a class="reference internal" href="#severity">Severity</a></li>
+<li><a class="reference internal" href="#persiststateinterval">PersistStateInterval</a></li>
+<li><a class="reference internal" href="#maxlinesatonce">MaxLinesAtOnce</a></li>
+<li><a class="reference internal" href="#maxsubmitatonce">MaxSubmitAtOnce</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="imtcp.html"
+                        title="previous chapter">imtcp: TCP Syslog Input Module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="imudp.html"
+                        title="next chapter">imudp: UDP Syslog Input Module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/configuration/modules/imtuxedoulog.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/configuration/modules/imtuxedoulog.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="imudp.html" title="imudp: UDP Syslog Input Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="imtcp.html" title="imtcp: TCP Syslog Input Module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" >Input Modules</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

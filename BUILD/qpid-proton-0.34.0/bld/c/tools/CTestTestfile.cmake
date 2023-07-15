@@ -1,0 +1,6 @@
+# CMake generated Testfile for 
+# Source directory: /root/rpmbuild/BUILD/qpid-proton-0.34.0/c/tools
+# Build directory: /root/rpmbuild/BUILD/qpid-proton-0.34.0/bld/c/tools
+# 
+# This file includes the relevant testing commands required for 
+# testing this directory and lists subdirectories to be tested as well.

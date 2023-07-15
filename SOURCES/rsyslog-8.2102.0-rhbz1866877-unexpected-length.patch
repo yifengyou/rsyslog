@@ -1,0 +1,14 @@
+diff -up rsyslog-8.2102.0/plugins/imjournal/imjournal.c.orig rsyslog-8.2102.0/plugins/imjournal/imjournal.c
+--- rsyslog-8.2102.0/plugins/imjournal/imjournal.c.orig	2021-06-28 09:05:23.283262154 +0200
++++ rsyslog-8.2102.0/plugins/imjournal/imjournal.c	2021-06-28 09:10:05.858381106 +0200
+@@ -424,8 +424,8 @@ readjournal(void)
+ 				severity = cs.iDfltSeverity;
+ 			}
+ 		} else {
+-			LogError(0, RS_RET_ERR, "The value of the 'PRIORITY' field has an "
+-				"unexpected length: %zu\n", length);
++			DBGPRINTF("The value of the 'PRIORITY' field has an "
++				"unexpected length: %zu value: '%s'\n", length, (const char*)get);
+ 		}
+ 	}
+ 

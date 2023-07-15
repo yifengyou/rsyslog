@@ -1,0 +1,162 @@
+diff -up rsyslog-8.2102.0/plugins/imfile/imfile.c.state-file-leaking rsyslog-8.2102.0/plugins/imfile/imfile.c
+--- rsyslog-8.2102.0/plugins/imfile/imfile.c.state-file-leaking	2021-01-18 11:21:14.000000000 +0100
++++ rsyslog-8.2102.0/plugins/imfile/imfile.c	2022-03-28 12:51:03.572554843 +0200
+@@ -259,6 +259,7 @@ struct modConfData_s {
+ 				   Must be manually reset to 0 if desired. Helper for
+ 				   polling mode.
+ 				 */
++	sbool deleteStateOnFileMove;
+ };
+ static modConfData_t *loadModConf = NULL;/* modConf ptr to use for the current load process */
+ static modConfData_t *runModConf = NULL;/* modConf ptr to use for run process */
+@@ -305,7 +306,8 @@ static struct cnfparamdescr modpdescr[]
+ 	{ "sortfiles", eCmdHdlrBinary, 0 },
+ 	{ "statefile.directory", eCmdHdlrString, 0 },
+ 	{ "normalizepath", eCmdHdlrBinary, 0 },
+-	{ "mode", eCmdHdlrGetWord, 0 }
++	{ "mode", eCmdHdlrGetWord, 0 },
++	{ "deletestateonfilemove", eCmdHdlrBinary, 0 }
+ };
+ static struct cnfparamblk modpblk =
+ 	{ CNFPARAMBLK_VERSION,
+@@ -545,11 +547,20 @@ static int
+ in_setupWatch(act_obj_t *const act, const int is_file)
+ {
+ 	int wd = -1;
++	int flags;
+ 	if(runModConf->opMode != OPMODE_INOTIFY)
+ 		goto done;
+ 
+-	wd = inotify_add_watch(ino_fd, act->name,
+-		(is_file) ? IN_MODIFY|IN_DONT_FOLLOW : IN_CREATE|IN_DELETE|IN_MOVED_FROM|IN_MOVED_TO);
++	// wd = inotify_add_watch(ino_fd, act->name,
++	// 	(is_file) ? IN_MODIFY|IN_DONT_FOLLOW : IN_CREATE|IN_DELETE|IN_MOVED_FROM|IN_MOVED_TO);
++	if(is_file)
++		flags = IN_MODIFY|IN_DONT_FOLLOW;
++	else if(runModConf->deleteStateOnFileMove)
++		flags = IN_CREATE|IN_DELETE|IN_MOVED_TO;
++	else
++		flags = IN_CREATE|IN_DELETE|IN_MOVED_FROM|IN_MOVED_TO;
++	wd = inotify_add_watch(ino_fd, act->name, flags);
++
+ 	if(wd < 0) {
+ 		if (errno == EACCES) { /* There is high probability of selinux denial on top-level paths */
+ 			DBGPRINTF("imfile: permission denied when adding watch for '%s'\n", act->name);
+@@ -713,7 +724,7 @@ act_obj_add(fs_edge_t *const edge, const
+ 	char basename[MAXFNAME];
+ 	DEFiRet;
+ 	int fd = -1;
+-	
++
+ 	DBGPRINTF("act_obj_add: edge %p, name '%s' (source '%s')\n", edge, name, source? source : "---");
+ 	for(act = edge->active ; act != NULL ; act = act->next) {
+ 		if(!strcmp(act->name, name)) {
+@@ -977,9 +988,18 @@ act_obj_destroy(act_obj_t *const act, co
+ 	if(act == NULL)
+ 		return;
+ 
+-	DBGPRINTF("act_obj_destroy: act %p '%s' (source '%s'), wd %d, pStrm %p, is_deleted %d, in_move %d\n",
+-		act, act->name, act->source_name? act->source_name : "---", act->wd, act->pStrm, is_deleted,
+-		act->in_move);
++	// DBGPRINTF("act_obj_destroy: act %p '%s' (source '%s'), wd %d, pStrm %p, is_deleted %d, in_move %d\n",
++	// 	act, act->name, act->source_name? act->source_name : "---", act->wd, act->pStrm, is_deleted,
++	// 	act->in_move);
++	if (runModConf->deleteStateOnFileMove) {
++		DBGPRINTF("act_obj_destroy: act %p '%s' (source '%s'), wd %d, pStrm %p, is_deleted %d\n",
++			act, act->name, act->source_name? act->source_name : "---", act->wd, act->pStrm, is_deleted);
++	} else {
++		DBGPRINTF("act_obj_destroy: act %p '%s' (source '%s'), wd %d, pStrm %p, is_deleted %d, in_move %d\n",
++			act, act->name, act->source_name? act->source_name : "---", act->wd, act->pStrm,
++			is_deleted, act->in_move);
++	}
++
+ 	if(act->is_symlink && is_deleted) {
+ 		act_obj_t *target_act;
+ 		for(target_act = act->edge->active ; target_act != NULL ; target_act = target_act->next) {
+@@ -996,13 +1016,15 @@ act_obj_destroy(act_obj_t *const act, co
+ 		pollFile(act); /* get any left-over data */
+ 		if(inst->bRMStateOnDel) {
+ 			statefn = getStateFileName(act, statefile, sizeof(statefile));
+-			getFullStateFileName(statefn, "", toDel, sizeof(toDel)); // TODO: check!
++			// getFullStateFileName(statefn, "", toDel, sizeof(toDel)); // TODO: check!
++			getFullStateFileName(statefn, act->file_id, toDel, sizeof(toDel)); // TODO: check!
+ 			statefn = toDel;
+ 		}
+ 		persistStrmState(act);
+ 		strm.Destruct(&act->pStrm);
+ 		/* we delete state file after destruct in case strm obj initiated a write */
+-		if(is_deleted && !act->in_move && inst->bRMStateOnDel) {
++		// if(is_deleted && !act->in_move && inst->bRMStateOnDel) {
++		if(is_deleted && inst->bRMStateOnDel && (runModConf->deleteStateOnFileMove || !act->in_move)) {
+ 			DBGPRINTF("act_obj_destroy: deleting state file %s\n", statefn);
+ 			unlink((char*)statefn);
+ 		}
+@@ -1012,6 +1034,7 @@ act_obj_destroy(act_obj_t *const act, co
+ 	}
+ 	#ifdef HAVE_INOTIFY_INIT
+ 	if(act->wd != -1) {
++		inotify_rm_watch(ino_fd, act->wd);
+ 		wdmapDel(act->wd);
+ 	}
+ 	#endif
+@@ -2026,6 +2049,7 @@ CODESTARTbeginCnfLoad
+ 	loadModConf->timeoutGranularity = 1000; /* default: 1 second */
+ 	loadModConf->haveReadTimeouts = 0; /* default: no timeout */
+ 	loadModConf->normalizePath = 1;
++	loadModConf->deleteStateOnFileMove = 0;
+ 	loadModConf->sortFiles = GLOB_NOSORT;
+ 	loadModConf->stateFileDirectory = NULL;
+ 	loadModConf->conf_tree = calloc(sizeof(fs_node_t), 1);
+@@ -2085,6 +2109,8 @@ CODESTARTsetModCnf
+ 			loadModConf->stateFileDirectory = (uchar*)es_str2cstr(pvals[i].val.d.estr, NULL);
+ 		} else if(!strcmp(modpblk.descr[i].name, "normalizepath")) {
+ 			loadModConf->normalizePath = (sbool) pvals[i].val.d.n;
++		} else if(!strcmp(modpblk.descr[i].name, "deletestateonfilemove")) {
++			loadModConf->deleteStateOnFileMove = (sbool) pvals[i].val.d.n;
+ 		} else if(!strcmp(modpblk.descr[i].name, "mode")) {
+ 			if(!es_strconstcmp(pvals[i].val.d.estr, "polling"))
+ 				loadModConf->opMode = OPMODE_POLLING;
+@@ -2388,16 +2414,35 @@ in_processEvent(struct inotify_event *ev
+ 	DBGPRINTF("in_processEvent process Event %x is_file %d, act->name '%s'\n",
+ 		ev->mask, etry->act->edge->is_file, etry->act->name);
+ 
+-	if((ev->mask & IN_MOVED_FROM)) {
+-		flag_in_move(etry->act->edge->node->edges, ev->name);
+-	}
+-	if(ev->mask & (IN_MOVED_FROM | IN_MOVED_TO))  {
+-		fs_node_walk(etry->act->edge->node, poll_tree);
+-	} else if(etry->act->edge->is_file && !(etry->act->is_symlink)) {
+-		in_handleFileEvent(ev, etry); // esentially poll_file()!
++	// if((ev->mask & IN_MOVED_FROM)) {
++	// 	flag_in_move(etry->act->edge->node->edges, ev->name);
++	// }
++	// if(ev->mask & (IN_MOVED_FROM | IN_MOVED_TO))  {
++	// 	fs_node_walk(etry->act->edge->node, poll_tree);
++	// } else if(etry->act->edge->is_file && !(etry->act->is_symlink)) {
++	// 	in_handleFileEvent(ev, etry); // esentially poll_file()!
++	// } else {
++	// 	fs_node_walk(etry->act->edge->node, poll_tree);
++	// }
++	if(!runModConf->deleteStateOnFileMove) {
++		if((ev->mask & IN_MOVED_FROM)) {
++			flag_in_move(etry->act->edge->node->edges, ev->name);
++		}
++		if(ev->mask & (IN_MOVED_FROM | IN_MOVED_TO))  {
++			fs_node_walk(etry->act->edge->node, poll_tree);
++		} else if(etry->act->edge->is_file && !(etry->act->is_symlink)) {
++			in_handleFileEvent(ev, etry); // esentially poll_file()!
++		} else {
++			fs_node_walk(etry->act->edge->node, poll_tree);
++		}
+ 	} else {
+-		fs_node_walk(etry->act->edge->node, poll_tree);
++		if((ev->mask & IN_MODIFY) && etry->act->edge->is_file && !(etry->act->is_symlink)) {
++			in_handleFileEvent(ev, etry); // esentially poll_file()!
++		} else {
++			fs_node_walk(etry->act->edge->node, poll_tree);
++		}
+ 	}
++
+ done:	return;
+ }
+ 

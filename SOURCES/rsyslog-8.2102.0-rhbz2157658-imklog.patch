@@ -1,0 +1,20 @@
+diff --git a/plugins/imklog/imklog.c b/plugins/imklog/imklog.c
+index 6c24b5a2db..78cfc3bae2 100644
+--- a/plugins/imklog/imklog.c
++++ b/plugins/imklog/imklog.c
+@@ -453,6 +453,7 @@ ENDactivateCnf
+ 
+ BEGINfreeCnf
+ CODESTARTfreeCnf
++	free(pModConf->pszBindRuleset);
+ ENDfreeCnf
+ 
+ 
+@@ -475,7 +476,6 @@ CODESTARTmodExit
+ 	if(pInputName != NULL)
+ 		prop.Destruct(&pInputName);
+ 
+-	free(runModConf->pszBindRuleset);
+ 	/* release objects we used */
+ 	objRelease(glbl, CORE_COMPONENT);
+ 	objRelease(net, CORE_COMPONENT);

@@ -1,0 +1,20 @@
+diff -up rsyslog-8.2102.0/plugins/imjournal/imjournal.c.orig rsyslog-8.2102.0/plugins/imjournal/imjournal.c
+--- rsyslog-8.2102.0/plugins/imjournal/imjournal.c.orig	2021-06-15 12:30:35.238832058 +0200
++++ rsyslog-8.2102.0/plugins/imjournal/imjournal.c	2021-06-15 12:32:04.699721356 +0200
+@@ -565,6 +565,8 @@ persistJournalState(void)
+ 		ABORT_FINALIZE(RS_RET_IO_ERROR);
+ 	}
+ 
++	fflush(sf);
++
+ 	/* change the name of the file to the configured one */
+ 	if (rename(tmp_sf, cs.stateFile) < 0) {
+ 		LogError(errno, iRet, "imjournal: rename() failed for new path: '%s'", cs.stateFile);
+@@ -586,6 +588,7 @@ persistJournalState(void)
+ 			LogError(errno, RS_RET_IO_ERROR, "imjournal: fsync on '%s' failed", glbl.GetWorkDir());
+ 			ABORT_FINALIZE(RS_RET_IO_ERROR);
+ 		}
++		closedir(wd);
+ 	}
+ 
+ 	DBGPRINTF("Persisted journal to '%s'\n", cs.stateFile);

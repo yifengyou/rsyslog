@@ -1,0 +1,13 @@
+imtcp_addtlframedelim.sh
+rcvr_fail_restore.sh - 3+
+./sndrcv_tls_ossl_anon_rebind.sh - 2
+sndrcv_tls_gtls_servercert_gtls_clientanon.sh - fix imtcp listen port!
+#done imtcp-tls-basic-vg.sh - port! (legacy?)
+imtcp-conndrop hat unter TSAN gelegentlich probleme - schwer erklärbar, disable?
+
+
+dynstats tests disable machen
+ubuntu 18 hat symbolizer nicht korrekt da
+kafka codecov auf centos7 VM?
+Suse VM - abschalten?
+kafkakat 

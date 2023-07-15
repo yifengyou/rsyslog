@@ -1,0 +1,250 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>mmtaghostname: message modification module &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Fix invalid UTF-8 Sequences (mmutf8fix)" href="mmutf8fix.html" />
+    <link rel="prev" title="mmsnmptrapd message modification module" href="mmsnmptrapd.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="mmutf8fix.html" title="Fix invalid UTF-8 Sequences (mmutf8fix)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mmsnmptrapd.html" title="mmsnmptrapd message modification module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_messagemod.html" accesskey="U">Message Modification Modules</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="mmtaghostname-message-modification-module">
+<h1>mmtaghostname: message modification module<a class="headerlink" href="#mmtaghostname-message-modification-module" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="86%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Module Name:</strong></td>
+<td><strong>mmtaghostname</strong></td>
+</tr>
+<tr class="row-even"><td><strong>Authors:</strong></td>
+<td>Jean-Philippe Hilaire &lt;<a class="reference external" href="mailto:jean-philippe&#46;hilaire&#37;&#52;&#48;pmu&#46;fr">jean-philippe<span>&#46;</span>hilaire<span>&#64;</span>pmu<span>&#46;</span>fr</a>&gt; &amp; Philippe Duveau &lt;<a class="reference external" href="mailto:philippe&#46;duveau&#37;&#52;&#48;free&#46;fr">philippe<span>&#46;</span>duveau<span>&#64;</span>free<span>&#46;</span>fr</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>As a message modification, it can be used in a different step of the
+message processing without interfering in the parsers’ chain process
+and can be applied before or after parsing process using rulesets.</p>
+<p>The purposes are :</p>
+<ul class="simple">
+<li>to add a tag on message produce by input module which does not provide
+a tag like imudp or imtcp. Useful when the tag is used for routing the
+message.</li>
+<li>to force message hostname to the rsyslog valeur.
+AWS Use case : applications in auto-scaling systems provides logs to rsyslog
+through udp/tcp. As a result of auto-scaling, the name of the host is based
+on an ephemeral IPs (short term meaning). In this situation rsyslog local
+hostname is generally closed to business rule. So replacing hostanme received
+by the rsyslog local Hostname provide values to the logs collected.</li>
+</ul>
+</div>
+<div class="section" id="compile">
+<h2>Compile<a class="headerlink" href="#compile" title="Permalink to this headline">¶</a></h2>
+<p>To successfully compile mmtaghostname module.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>./configure --enable-mmtaghostname ...
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuration-parameters">
+<h2>Configuration Parameters<a class="headerlink" href="#configuration-parameters" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="tag">
+<h3>Tag<a class="headerlink" href="#tag" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>&#160;</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>The tag to be assigned to messages modified. If you would like to see the
+colon after the tag, you need to include it when you assign a tag value,
+like so: <code class="docutils literal notranslate"><span class="pre">tag=&quot;myTagValue:&quot;</span></code>.</p>
+<p>If this attribute is no provided, messages tags are not modified.</p>
+</div>
+<div class="section" id="forcelocalhostname">
+<h3>ForceLocalHostname<a class="headerlink" href="#forcelocalhostname" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Binary</td>
+<td>no</td>
+<td>&#160;</td>
+<td>off</td>
+</tr>
+</tbody>
+</table>
+<p>This attribute force to set the HOSTNAME of the message to the rsyslog
+value “localHostName”. This allow to set a valid value to message received
+received from local application through imudp or imtcp.</p>
+</div>
+</div>
+<div class="section" id="sample">
+<h2>Sample<a class="headerlink" href="#sample" title="Permalink to this headline">¶</a></h2>
+<p>In this sample, the message received is parsed by RFC5424 parser and then
+the HOSTNAME is overwritten and a tag is setted.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module(load=&#39;mmtaghostname&#39;)
+module(load=&#39;imudp&#39;)
+global(localhostname=&quot;sales-front&quot;)
+
+ruleset(name=&quot;TagUDP&quot; parser=[ &quot;rsyslog.rfc5424&quot; ]) {
+    action(type=&quot;mmtaghostname&quot; tag=&quot;front&quot; forcelocalhostname=&quot;on&quot;)
+    call ...
+}
+input(type=&quot;imudp&quot; port=&quot;514&quot; ruleset=&quot;TagUDP&quot;)
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">mmtaghostname: message modification module</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#compile">Compile</a></li>
+<li><a class="reference internal" href="#configuration-parameters">Configuration Parameters</a><ul>
+<li><a class="reference internal" href="#tag">Tag</a></li>
+<li><a class="reference internal" href="#forcelocalhostname">ForceLocalHostname</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sample">Sample</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mmsnmptrapd.html"
+                        title="previous chapter">mmsnmptrapd message modification module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mmutf8fix.html"
+                        title="next chapter">Fix invalid UTF-8 Sequences (mmutf8fix)</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/configuration/modules/mmtaghostname.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/configuration/modules/mmtaghostname.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="mmutf8fix.html" title="Fix invalid UTF-8 Sequences (mmutf8fix)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mmsnmptrapd.html" title="mmsnmptrapd message modification module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_messagemod.html" >Message Modification Modules</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

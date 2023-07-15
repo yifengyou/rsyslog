@@ -1,0 +1,134 @@
+--- rsyslog-8.2102.0.ori/runtime/glbl.h	2020-10-03 19:06:47.000000000 +0200
++++ rsyslog-8.2102.0/runtime/glbl.h	2022-09-07 13:32:51.623799582 +0200
+@@ -72,6 +72,7 @@
+ 	SIMP_PROP(DfltNetstrmDrvrCAF, uchar*)
+ 	SIMP_PROP(DfltNetstrmDrvrKeyFile, uchar*)
+ 	SIMP_PROP(DfltNetstrmDrvrCertFile, uchar*)
++	SIMP_PROP(NetstrmDrvrCAExtraFiles, uchar*)
+ 	SIMP_PROP(ParserControlCharacterEscapePrefix, uchar)
+ 	SIMP_PROP(ParserDropTrailingLFOnReception, int)
+ 	SIMP_PROP(ParserEscapeControlCharactersOnReceive, int)
+--- rsyslog-8.2102.0.ori/runtime/glbl.c	2022-09-07 13:17:02.669696053 +0200
++++ rsyslog-8.2102.0/runtime/glbl.c	2022-09-07 13:56:37.678966129 +0200
+@@ -122,6 +122,7 @@
+ static uchar *pszDfltNetstrmDrvrCAF = NULL; /* default CA file for the netstrm driver */
+ static uchar *pszDfltNetstrmDrvrKeyFile = NULL; /* default key file for the netstrm driver (server) */
+ static uchar *pszDfltNetstrmDrvrCertFile = NULL; /* default cert file for the netstrm driver (server) */
++static uchar *pszNetstrmDrvrCAExtraFiles = NULL; /* list of additional CAExtraFiles */
+ int bTerminateInputs = 0;		/* global switch that inputs shall terminate ASAP (1=> terminate) */
+ static uchar cCCEscapeChar = '#'; /* character to be used to start an escape sequence for control chars */
+ static int bDropTrailingLF = 1; /* drop trailing LF's on reception? */
+@@ -176,6 +177,7 @@
+ 	{ "defaultnetstreamdriverkeyfile", eCmdHdlrString, 0 },
+ 	{ "defaultnetstreamdrivercertfile", eCmdHdlrString, 0 },
+ 	{ "defaultnetstreamdriver", eCmdHdlrString, 0 },
++	{ "netstreamdrivercaextrafiles", eCmdHdlrString, 0 },
+ 	{ "maxmessagesize", eCmdHdlrSize, 0 },
+ 	{ "oversizemsg.errorfile", eCmdHdlrGetWord, 0 },
+ 	{ "oversizemsg.report", eCmdHdlrBinary, 0 },
+@@ -307,6 +309,8 @@
+ /* TODO: use custom function which frees existing value */
+ SIMP_PROP_SET(DfltNetstrmDrvrCertFile, pszDfltNetstrmDrvrCertFile, uchar*)
+ /* TODO: use custom function which frees existing value */
++SIMP_PROP_SET(NetstrmDrvrCAExtraFiles, pszNetstrmDrvrCAExtraFiles, uchar*)
++/* TODO: use custom function which frees existing value */
+ 
+ #undef SIMP_PROP
+ #undef SIMP_PROP_SET
+@@ -838,6 +842,12 @@
+ 	return(pszDfltNetstrmDrvrCAF);
+ }
+ 
++/* return the extra CA Files, if needed */
++static uchar*
++GetNetstrmDrvrCAExtraFiles(void)
++{
++      return(pszNetstrmDrvrCAExtraFiles);
++}
+ 
+ /* return the current default netstream driver key File */
+ static uchar*
+@@ -925,6 +935,7 @@
+ 	SIMP_PROP(DfltNetstrmDrvrCAF)
+ 	SIMP_PROP(DfltNetstrmDrvrKeyFile)
+ 	SIMP_PROP(DfltNetstrmDrvrCertFile)
++	SIMP_PROP(NetstrmDrvrCAExtraFiles)
+ #ifdef USE_UNLIMITED_SELECT
+ 	SIMP_PROP(FdSetSize)
+ #endif
+@@ -941,6 +952,8 @@
+ 	pszDfltNetstrmDrvr = NULL;
+ 	free(pszDfltNetstrmDrvrCAF);
+ 	pszDfltNetstrmDrvrCAF = NULL;
++	free(pszNetstrmDrvrCAExtraFiles);
++	pszNetstrmDrvrCAExtraFiles = NULL;	
+ 	free(pszDfltNetstrmDrvrKeyFile);
+ 	pszDfltNetstrmDrvrKeyFile = NULL;
+ 	free(pszDfltNetstrmDrvrCertFile);
+@@ -1350,6 +1363,9 @@
+ 			free(pszDfltNetstrmDrvr);
+ 			pszDfltNetstrmDrvr = (uchar*)
+ 				es_str2cstr(cnfparamvals[i].val.d.estr, NULL);
++		} else if(!strcmp(paramblk.descr[i].name, "netstreamdrivercaextrafiles")) {
++			free(pszNetstrmDrvrCAExtraFiles);
++			pszNetstrmDrvrCAExtraFiles = (uchar*) es_str2cstr(cnfparamvals[i].val.d.estr, NULL);
+ 		} else if(!strcmp(paramblk.descr[i].name, "preservefqdn")) {
+ 			bPreserveFQDN = (int) cnfparamvals[i].val.d.n;
+ 		} else if(!strcmp(paramblk.descr[i].name,
+@@ -1546,6 +1562,8 @@
+ 	&pszDfltNetstrmDrvrKeyFile, NULL));
+ 	CHKiRet(regCfSysLineHdlr((uchar *)"defaultnetstreamdrivercertfile", 0, eCmdHdlrGetWord, NULL,
+ 	&pszDfltNetstrmDrvrCertFile, NULL));
++	CHKiRet(regCfSysLineHdlr((uchar *)"netstreamdrivercaextrafiles", 0, eCmdHdlrGetWord, NULL,
++	&pszNetstrmDrvrCAExtraFiles, NULL));
+ 	CHKiRet(regCfSysLineHdlr((uchar *)"localhostname", 0, eCmdHdlrGetWord, NULL, &LocalHostNameOverride, NULL));
+ 	CHKiRet(regCfSysLineHdlr((uchar *)"localhostipif", 0, eCmdHdlrGetWord, setLocalHostIPIF, NULL, NULL));
+ 	CHKiRet(regCfSysLineHdlr((uchar *)"optimizeforuniprocessor", 0, eCmdHdlrGoneAway, NULL, NULL, NULL));
+--- rsyslog-8.2102.0.ori/runtime/nsd_ossl.c	2022-09-07 13:17:02.705696208 +0200
++++ rsyslog-8.2102.0/runtime/nsd_ossl.c	2022-09-07 14:09:18.697256943 +0200
+@@ -88,6 +88,7 @@
+ static short bHaveCA;
+ static short bHaveCert;
+ static short bHaveKey;
++static short bHaveExtraCAFiles;
+ static int bAnonInit;
+ static MUTEX_TYPE anonInit_mut = PTHREAD_MUTEX_INITIALIZER;
+ 
+@@ -414,7 +415,8 @@
+ {
+ 	DEFiRet;
+ 	DBGPRINTF("openssl: entering osslGlblInit\n");
+-	const char *caFile, *certFile, *keyFile;
++	const char *caFile, *certFile, *keyFile, *extraCaFile;
++	char *extraCaFiles;
+ 
+ 	/* Setup OpenSSL library */
+ 	if((opensslh_THREAD_setup() == 0) || !SSL_library_init()) {
+@@ -451,9 +453,27 @@
+ 	} else {
+ 		bHaveKey = 1;
+ 	}
++	extraCaFiles = (char*) glbl.GetNetstrmDrvrCAExtraFiles();
++	if(extraCaFiles == NULL) {
++		bHaveExtraCAFiles = 0;
++	} else {
++		bHaveExtraCAFiles = 1;
++	}
+ 
+ 	/* Create main CTX Object */
+ 	ctx = SSL_CTX_new(SSLv23_method());
++	if(bHaveExtraCAFiles == 1) {
++		while((extraCaFile = strsep(&extraCaFiles, ","))) {
++			if(SSL_CTX_load_verify_locations(ctx, extraCaFile, NULL) != 1) {
++				LogError(0, RS_RET_TLS_CERT_ERR, "Error: Extra Certificate file could not be accessed. "
++					"Check at least: 1) file path is correct, 2) file exist, "
++					"3) permissions are correct, 4) file content is correct. "
++					"Open ssl error info may follow in next messages");
++				osslLastSSLErrorMsg(0, NULL, LOG_ERR, "osslGlblInit");
++				ABORT_FINALIZE(RS_RET_TLS_CERT_ERR);
++			}
++		}
++	}
+ 	if(bHaveCA == 1 && SSL_CTX_load_verify_locations(ctx, caFile, NULL) != 1) {
+ 		LogError(0, RS_RET_TLS_CERT_ERR, "Error: CA certificate could not be accessed. "
+ 				"Check at least: 1) file path is correct, 2) file exist, "

@@ -1,0 +1,326 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pmdb2diag: DB2 Diag file parser module &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="pmlastmsg: last message repeated n times" href="pmlastmsg.html" />
+    <link rel="prev" title="pmciscoios" href="pmciscoios.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="pmlastmsg.html" title="pmlastmsg: last message repeated n times"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pmciscoios.html" title="pmciscoios"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_parser.html" accesskey="U">Parser Modules</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pmdb2diag-db2-diag-file-parser-module">
+<h1>pmdb2diag: DB2 Diag file parser module<a class="headerlink" href="#pmdb2diag-db2-diag-file-parser-module" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="78%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Module Name:</strong></td>
+<td><strong>pmdb2diag</strong></td>
+</tr>
+<tr class="row-even"><td><strong>Authors:</strong></td>
+<td>Jean-Philippe Hilaire &lt;<a class="reference external" href="mailto:jean-philippe&#46;hilaire&#37;&#52;&#48;pmu&#46;fr">jean-philippe<span>&#46;</span>hilaire<span>&#64;</span>pmu<span>&#46;</span>fr</a>&gt; &amp; Philippe Duveau &lt;<a class="reference external" href="mailto:philippe&#46;duveau&#37;&#52;&#48;free&#46;fr">philippe<span>&#46;</span>duveau<span>&#64;</span>free<span>&#46;</span>fr</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>The objective of this module is to extract timestamp, procid and appname form the log
+lines without altering it</p>
+<p>The parser is acting after an imfile input. This implies that imfile must be configured
+with needParse to setted to on.</p>
+</div>
+<div class="section" id="compile">
+<h2>Compile<a class="headerlink" href="#compile" title="Permalink to this headline">¶</a></h2>
+<p>To successfully compile pmdb2diag module you need to add it via configure.</p>
+<blockquote>
+<div>./configure –enable-pmdb2diag …</div></blockquote>
+</div>
+<div class="section" id="configuration-parameters">
+<h2>Configuration Parameters<a class="headerlink" href="#configuration-parameters" title="Permalink to this headline">¶</a></h2>
+<p><strong>Parser Name:</strong> “db2.diag”</p>
+<p>The default value of parameter are defined with escapeLF on in imfile.</p>
+<div class="section" id="timeformat">
+<h3>timeformat<a class="headerlink" href="#timeformat" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>no</td>
+<td>see strptime manual</td>
+<td>%Y-%m-%d-%H.%M.%S.</td>
+</tr>
+</tbody>
+</table>
+<p>Format of the timestamp in d2diag log included decimal separator between seconds and second fractions.</p>
+</div>
+<div class="section" id="timepos">
+<h3>timepos<a class="headerlink" href="#timepos" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>integer</td>
+<td>no</td>
+<td>&#160;</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Position of the timestamp in the db2 diag log.</p>
+</div>
+<div class="section" id="levelpos">
+<h3>levelpos<a class="headerlink" href="#levelpos" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>integer</td>
+<td>no</td>
+<td>&#160;</td>
+<td>59</td>
+</tr>
+</tbody>
+</table>
+<p>Position of the severity (level) in the db2 diag log.</p>
+</div>
+<div class="section" id="pidstarttoprogstartshift">
+<h3>pidstarttoprogstartshift<a class="headerlink" href="#pidstarttoprogstartshift" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">mandatory</th>
+<th class="head">format</th>
+<th class="head">default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>integer</td>
+<td>no</td>
+<td>&#160;</td>
+<td>49</td>
+</tr>
+</tbody>
+</table>
+<p>Position of the prog related to the pid (form beginning to beginning) in the db2 diag log.</p>
+</div>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="example-1">
+<h3>Example 1<a class="headerlink" href="#example-1" title="Permalink to this headline">¶</a></h3>
+<p>This is the simplest parsing with default values</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module(load=&quot;pmdb2diag&quot;)
+ruleset(name=&quot;ruleDB2&quot; parser=&quot;db2.diag&quot;) {
+    ... do something
+}
+input(type=&quot;imfile&quot; file=&quot;db2diag.log&quot; ruleset=&quot;ruleDB2&quot; tag=&quot;db2diag&quot;
+    startmsg.regex=&quot;^[0-9]{4}-[0-9]{2}-[0-9]{2}&quot; escapelf=&quot;on&quot; needparse=&quot;on&quot;)
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-2">
+<h3>Example 2<a class="headerlink" href="#example-2" title="Permalink to this headline">¶</a></h3>
+<p>Parsing with custom values</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module(load=&quot;pmdb2diag&quot;)
+parser(type=&quot;pmdb2diag&quot; name=&quot;custom.db2.diag&quot; levelpos=&quot;57&quot;
+    timeformat=&quot;&quot;%y-%m-%d:%H.%M.%S.&quot;)
+ruleset(name=&quot;ruleDB2&quot; parser=&quot;custom.db2.diag&quot;) {
+    ... do something
+}
+input(type=&quot;imfile&quot; file=&quot;db2diag.log&quot; ruleset=&quot;ruleDB2&quot; tag=&quot;db2diag&quot;
+    startmsg.regex=&quot;^[0-9]{4}-[0-9]{2}-[0-9]{2}&quot; escapelf=&quot;on&quot; needparse=&quot;on&quot;)
+</pre></div>
+</div>
+</div>
+<div class="section" id="db2-log-sample">
+<h3>DB2 Log sample<a class="headerlink" href="#db2-log-sample" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>2015-05-06-16.53.26.989402+120 E1876227378A1702     LEVEL: Info
+PID     : 4390948              TID : 89500          PROC : db2sysc 0
+INSTANCE: db2itst              NODE : 000           DB   : DBTEST
+APPHDL  : 0-14410              APPID: 10.42.2.166.36261.150506120149
+AUTHID  : DBUSR                HOSTNAME: dev-dbm1
+EDUID   : 89500                EDUNAME: db2agent (DBTEST) 0
+FUNCTION: DB2 UDB, relation data serv, sqlrr_dispatch_xa_request, probe:703
+MESSAGE : ZRC=0x80100024=-2146435036=SQLP_NOTA &quot;Transaction was not found&quot;
+          DIA8036C XA error with request type of &quot;&quot;. Transaction was not found.
+DATA #1 : String, 27 bytes
+XA Dispatcher received NOTA
+CALLSTCK: (Static functions may not be resolved correctly, as they are resolved to the nearest symbol)
+  [0] 0x090000000A496B70 sqlrr_xrollback__FP14db2UCinterface + 0x11E0
+  [1] 0x090000000A356764 sqljsSyncRollback__FP14db2UCinterface + 0x6E4
+  [2] 0x090000000C1FAAA8 sqljsParseRdbAccessed__FP13sqljsDrdaAsCbP13sqljDDMObjectP14db2UCinterface + 0x529C
+  [3] 0x0000000000000000 ?unknown + 0x0
+  [4] 0x090000000C23D260 @72@sqljsSqlam__FP14db2UCinterfaceP8sqeAgentb + 0x1174
+  [5] 0x090000000C23CE54 @72@sqljsSqlam__FP14db2UCinterfaceP8sqeAgentb + 0xD68
+  [6] 0x090000000D74AB90 @72@sqljsDriveRequests__FP8sqeAgentP14db2UCconHandle + 0xA8
+  [7] 0x090000000D74B6A0 @72@sqljsDrdaAsInnerDriver__FP18SQLCC_INITSTRUCT_Tb + 0x5F8
+  [8] 0x090000000B8F85AC RunEDU__8sqeAgentFv + 0x48C38
+  [9] 0x090000000B876240 RunEDU__8sqeAgentFv + 0x124
+  [10] 0x090000000CD90DFC EDUDriver__9sqzEDUObjFv + 0x130
+  [11] 0x090000000BE01664 sqloEDUEntry + 0x390
+  [12] 0x09000000004F5E10 _pthread_body + 0xF0
+  [13] 0xFFFFFFFFFFFFFFFC ?unknown + 0xFFFFFFFF
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pmdb2diag: DB2 Diag file parser module</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#compile">Compile</a></li>
+<li><a class="reference internal" href="#configuration-parameters">Configuration Parameters</a><ul>
+<li><a class="reference internal" href="#timeformat">timeformat</a></li>
+<li><a class="reference internal" href="#timepos">timepos</a></li>
+<li><a class="reference internal" href="#levelpos">levelpos</a></li>
+<li><a class="reference internal" href="#pidstarttoprogstartshift">pidstarttoprogstartshift</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#examples">Examples</a><ul>
+<li><a class="reference internal" href="#example-1">Example 1</a></li>
+<li><a class="reference internal" href="#example-2">Example 2</a></li>
+<li><a class="reference internal" href="#db2-log-sample">DB2 Log sample</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pmciscoios.html"
+                        title="previous chapter">pmciscoios</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pmlastmsg.html"
+                        title="next chapter">pmlastmsg: last message repeated n times</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/configuration/modules/pmdb2diag.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/configuration/modules/pmdb2diag.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="pmlastmsg.html" title="pmlastmsg: last message repeated n times"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pmciscoios.html" title="pmciscoios"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_parser.html" >Parser Modules</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

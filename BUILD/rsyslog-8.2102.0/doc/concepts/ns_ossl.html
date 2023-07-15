@@ -1,0 +1,214 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>openssl Network Stream Driver &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Example Use Cases" href="../examples/index.html" />
+    <link rel="prev" title="gtls Network Stream Driver" href="ns_gtls.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../examples/index.html" title="Example Use Cases"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ns_gtls.html" title="gtls Network Stream Driver"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Concepts</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="netstrm_drvr.html" accesskey="U">NetStream Drivers</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="openssl-network-stream-driver">
+<h1>openssl Network Stream Driver<a class="headerlink" href="#openssl-network-stream-driver" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="26%" />
+<col width="74%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Driver Name:</strong></td>
+<td><strong>ossl</strong></td>
+</tr>
+<tr class="row-even"><td><strong>Author:</strong></td>
+<td>Andre Lorbach &lt;<a class="reference external" href="mailto:alorbach&#37;&#52;&#48;adiscon&#46;com">alorbach<span>&#64;</span>adiscon<span>&#46;</span>com</a>&gt;</td>
+</tr>
+<tr class="row-odd"><td><strong>Available since:</strong></td>
+<td>8.36.0</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>This network stream driver implements a TLS protected transport
+via the <a class="reference external" href="https://www.openssl.org/">OpenSSL library</a>.</p>
+</div>
+<div class="section" id="supported-driver-modes">
+<h2>Supported Driver Modes<a class="headerlink" href="#supported-driver-modes" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>0</strong> - unencrypted transmission (just like <a class="reference external" href="ns_ptcp.html">ptcp</a> driver)</li>
+<li><strong>1</strong> - TLS-protected operation</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Mode 0 does not provide any benefit over the ptcp driver. This
+mode exists for technical reasons, but should not be used. It may be
+removed in the future.</p>
+</div>
+</div>
+<div class="section" id="supported-authentication-modes">
+<h2>Supported Authentication Modes<a class="headerlink" href="#supported-authentication-modes" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>anon</strong> - anonymous authentication as described in IETF’s
+draft-ietf-syslog-transport-tls-12 Internet draft</li>
+<li><strong>x509/fingerprint</strong> - certificate fingerprint authentication as
+described in IETF’s draft-ietf-syslog-transport-tls-12 Internet draft.
+Even in x509/fingerprint mode, both the client and server certificate
+currently must be signed by the same root CA.</li>
+<li><strong>x509/certvalid</strong> - certificate validation only. x509/certvalid is
+a nonstandard mode. It validates the remote peers certificate, but
+does not check the subject name. This is weak authentication that may
+be useful in scenarios where multiple devices are deployed and it is
+sufficient proof of authenticity when their certificates are signed by
+the CA the server trusts. This is better than anon authentication, but
+still not recommended. <strong>Known Problems</strong></li>
+<li><strong>x509/name</strong> - certificate validation and subject name authentication as
+described in IETF’s draft-ietf-syslog-transport-tls-12 Internet draft</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">“anon” does not permit to authenticate the remote peer. As such,
+this mode is vulnerable to man in the middle attacks as well as
+unauthorized access. It is recommended NOT to use this mode.
+A certificate / key does not need to be configured in this authmode.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p><strong>Anon mode changes in:</strong> v8.190 (or above)</p>
+<ul class="last simple">
+<li>Anonymous Ciphers (DH and ECDH) are available in ANON mode.</li>
+<li>Server does not require a certificate anymore in anon mode.</li>
+<li>If Server has a certificate and the Client does not, the highest possible
+ciphers will be selected.</li>
+<li>If both Server and Client do not have a certificate, the highest available
+anon cipher will be used.</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">openssl Network Stream Driver</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#supported-driver-modes">Supported Driver Modes</a></li>
+<li><a class="reference internal" href="#supported-authentication-modes">Supported Authentication Modes</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="ns_gtls.html"
+                        title="previous chapter">gtls Network Stream Driver</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../examples/index.html"
+                        title="next chapter">Example Use Cases</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/concepts/ns_ossl.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/concepts/ns_ossl.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../examples/index.html" title="Example Use Cases"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ns_gtls.html" title="gtls Network Stream Driver"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Concepts</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="netstrm_drvr.html" >NetStream Drivers</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

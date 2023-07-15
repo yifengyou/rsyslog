@@ -1,0 +1,215 @@
+diff -up rsyslog-8.2102.0/runtime/nsd_gtls.c.orig rsyslog-8.2102.0/runtime/nsd_gtls.c
+--- rsyslog-8.2102.0/runtime/nsd_gtls.c.orig	2022-04-11 09:26:17.826271989 +0200
++++ rsyslog-8.2102.0/runtime/nsd_gtls.c	2022-04-11 09:33:28.702012052 +0200
+@@ -556,7 +556,9 @@ gtlsRecordRecv(nsd_gtls_t *pThis)
+ 	DEFiRet;
+ 
+ 	ISOBJ_TYPE_assert(pThis, nsd_gtls);
+-	DBGPRINTF("gtlsRecordRecv: start\n");
++	DBGPRINTF("gtlsRecordRecv: start (Pending Data: %zd | Wanted Direction: %s)\n",
++		gnutls_record_check_pending(pThis->sess),
++		(gnutls_record_get_direction(pThis->sess) == gtlsDir_READ ? "READ" : "WRITE") );
+ 
+ 	lenRcvd = gnutls_record_recv(pThis->sess, pThis->pszRcvBuf, NSD_GTLS_MAX_RCVBUF);
+ 	if(lenRcvd >= 0) {
+@@ -581,14 +583,30 @@ gtlsRecordRecv(nsd_gtls_t *pThis)
+ 					(NSD_GTLS_MAX_RCVBUF+lenRcvd));
+ 				pThis->lenRcvBuf = NSD_GTLS_MAX_RCVBUF+lenRcvd;
+ 			} else {
+-				goto sslerr;
++				if (lenRcvd == GNUTLS_E_AGAIN || lenRcvd == GNUTLS_E_INTERRUPTED) {
++					goto sslerragain;	/* Go to ERR AGAIN handling */
++				} else {
++					/* Do all other error handling */
++					int gnuRet = lenRcvd;
++					ABORTgnutls;
++				}
+ 			}
+ 		}
+ 	} else if(lenRcvd == GNUTLS_E_AGAIN || lenRcvd == GNUTLS_E_INTERRUPTED) {
+-sslerr:
+-		pThis->rtryCall = gtlsRtry_recv;
+-		dbgprintf("GnuTLS receive requires a retry (this most probably is OK and no error condition)\n");
+-		ABORT_FINALIZE(RS_RET_RETRY);
++sslerragain:
++		/* Check if the underlaying file descriptor needs to read or write data!*/
++		if (gnutls_record_get_direction(pThis->sess) == gtlsDir_READ) {
++			pThis->rtryCall = gtlsRtry_recv;
++			dbgprintf("GnuTLS receive requires a retry, this most probably is OK and no error condition\n");
++			ABORT_FINALIZE(RS_RET_RETRY);
++		} else {
++			uchar *pErr = gtlsStrerror(lenRcvd);
++			LogError(0, RS_RET_GNUTLS_ERR, "GnuTLS receive error %zd has wrong read direction(wants write) "
++				"- this could be caused by a broken connection. GnuTLS reports: %s\n",
++				lenRcvd, pErr);
++			free(pErr);
++			ABORT_FINALIZE(RS_RET_GNUTLS_ERR);
++		}
+ 	} else {
+ 		int gnuRet = lenRcvd;
+ 		ABORTgnutls;
+@@ -1978,6 +1996,7 @@ static rsRetVal
+ Send(nsd_t *pNsd, uchar *pBuf, ssize_t *pLenBuf)
+ {
+ 	int iSent;
++	int wantsWriteData = 0;
+ 	nsd_gtls_t *pThis = (nsd_gtls_t*) pNsd;
+ 	DEFiRet;
+ 	ISOBJ_TYPE_assert(pThis, nsd_gtls);
+@@ -1998,10 +2017,12 @@ Send(nsd_t *pNsd, uchar *pBuf, ssize_t *
+ 			break;
+ 		}
+ 		if(iSent != GNUTLS_E_INTERRUPTED && iSent != GNUTLS_E_AGAIN) {
++			/* Check if the underlaying file descriptor needs to read or write data!*/
++			wantsWriteData = gnutls_record_get_direction(pThis->sess);
+ 			uchar *pErr = gtlsStrerror(iSent);
+-			LogError(0, RS_RET_GNUTLS_ERR, "unexpected GnuTLS error %d - this "
+-				"could be caused by a broken connection. GnuTLS reports: %s \n",
+-				iSent, pErr);
++			LogError(0, RS_RET_GNUTLS_ERR, "unexpected GnuTLS error %d, wantsWriteData=%d - this "
++				"could be caused by a broken connection. GnuTLS reports: %s\n",
++				iSent, wantsWriteData, pErr);
+ 			free(pErr);
+ 			gnutls_perror(iSent);
+ 			ABORT_FINALIZE(RS_RET_GNUTLS_ERR);
+diff -up rsyslog-8.2102.0/runtime/nsd_gtls.h.orig rsyslog-8.2102.0/runtime/nsd_gtls.h
+--- rsyslog-8.2102.0/runtime/nsd_gtls.h.orig	2022-04-11 09:26:32.744262781 +0200
++++ rsyslog-8.2102.0/runtime/nsd_gtls.h	2022-04-11 09:34:29.909982895 +0200
+@@ -33,6 +33,11 @@ typedef enum {
+ 	gtlsRtry_recv = 2
+ } gtlsRtryCall_t;		/**< IDs of calls that needs to be retried */
+ 
++typedef enum {
++	gtlsDir_READ = 0,	/**< GNUTLS wants READ */
++	gtlsDir_WRITE = 1	/**< GNUTLS wants WRITE */
++} gtlsDirection_t;
++
+ typedef nsd_if_t nsd_gtls_if_t; /* we just *implement* this interface */
+ 
+ /* the nsd_gtls object */
+diff -up rsyslog-8.2102.0/runtime/nsdsel_gtls.c.orig rsyslog-8.2102.0/runtime/nsdsel_gtls.c
+--- rsyslog-8.2102.0/runtime/nsdsel_gtls.c.orig	2022-04-11 09:26:42.529256742 +0200
++++ rsyslog-8.2102.0/runtime/nsdsel_gtls.c	2022-04-11 09:38:27.425869737 +0200
+@@ -81,6 +81,7 @@ Add(nsdsel_t *pNsdsel, nsd_t *pNsd, nsds
+ 
+ 	ISOBJ_TYPE_assert(pThis, nsdsel_gtls);
+ 	ISOBJ_TYPE_assert(pNsdGTLS, nsd_gtls);
++	DBGPRINTF("Add on nsd %p:\n", pNsdGTLS);
+ 	if(pNsdGTLS->iMode == 1) {
+ 		if(waitOp == NSDSEL_RD && gtlsHasRcvInBuffer(pNsdGTLS)) {
+ 			++pThis->iBufferRcvReady;
+@@ -99,6 +100,8 @@ Add(nsdsel_t *pNsdsel, nsd_t *pNsd, nsds
+ 		}
+ 	}
+ 
++	dbgprintf("nsdsel_gtls: reached end on nsd %p, calling nsdsel_ptcp.Add with waitOp %d... \n", pNsdGTLS, waitOp);
++
+ 	/* if we reach this point, we need no special handling */
+ 	CHKiRet(nsdsel_ptcp.Add(pThis->pTcp, pNsdGTLS->pTcp, waitOp));
+ 
+@@ -120,7 +123,8 @@ Select(nsdsel_t *pNsdsel, int *piNumRead
+ 	if(pThis->iBufferRcvReady > 0) {
+ 		/* we still have data ready! */
+ 		*piNumReady = pThis->iBufferRcvReady;
+-		dbgprintf("nsdsel_gtls: doing dummy select, data present\n");
++		dbgprintf("nsdsel_gtls: doing dummy select for %p->iBufferRcvReady=%d, data present\n",
++			pThis, pThis->iBufferRcvReady);
+ 	} else {
+ 		iRet = nsdsel_ptcp.Select(pThis->pTcp, piNumReady);
+ 	}
+@@ -138,7 +142,7 @@ doRetry(nsd_gtls_t *pNsd)
+ 	DEFiRet;
+ 	int gnuRet;
+ 
+-	dbgprintf("GnuTLS requested retry of %d operation - executing\n", pNsd->rtryCall);
++	dbgprintf("doRetry: GnuTLS requested retry of %d operation - executing\n", pNsd->rtryCall);
+ 
+ 	/* We follow a common scheme here: first, we do the systen call and
+ 	 * then we check the result. So far, the result is checked after the
+@@ -151,7 +155,7 @@ doRetry(nsd_gtls_t *pNsd)
+ 		case gtlsRtry_handshake:
+ 			gnuRet = gnutls_handshake(pNsd->sess);
+ 			if(gnuRet == GNUTLS_E_AGAIN || gnuRet == GNUTLS_E_INTERRUPTED) {
+-				dbgprintf("GnuTLS handshake retry did not finish - "
++				dbgprintf("doRetry: GnuTLS handshake retry did not finish - "
+ 					"setting to retry (this is OK and can happen)\n");
+ 				FINALIZE;
+ 			} else if(gnuRet == 0) {
+@@ -167,9 +171,20 @@ doRetry(nsd_gtls_t *pNsd)
+ 			}
+ 			break;
+ 		case gtlsRtry_recv:
+-			dbgprintf("retrying gtls recv, nsd: %p\n", pNsd);
+-			CHKiRet(gtlsRecordRecv(pNsd));
+-			pNsd->rtryCall = gtlsRtry_None; /* we are done */
++			dbgprintf("doRetry: retrying gtls recv, nsd: %p\n", pNsd);
++			iRet = gtlsRecordRecv(pNsd);
++			if (iRet == RS_RET_RETRY) {
++				// Check if there is pending data
++				size_t stBytesLeft = gnutls_record_check_pending(pNsd->sess);
++				if (stBytesLeft > 0) {
++					// We are in retry and more data waiting, finalize it
++					goto finalize_it;
++				} else {
++					dbgprintf("doRetry: gtlsRecordRecv returned RETRY, but there is no pending"
++						"data on nsd: %p\n", pNsd);
++				}
++			}
++			pNsd->rtryCall = gtlsRtry_None; /* no more data, we are done */
+ 			gnuRet = 0;
+ 			break;
+ 		case gtlsRtry_None:
+@@ -241,7 +256,7 @@ IsReady(nsdsel_t *pNsdsel, nsd_t *pNsd,
+ 		 * socket. -- rgerhards, 2010-11-20
+ 		 */
+ 		if(pThis->iBufferRcvReady) {
+-			dbgprintf("nsd_gtls: dummy read, buffer not available for this FD\n");
++			dbgprintf("nsd_gtls: dummy read, %p->buffer not available for this FD\n", pThis);
+ 			*pbIsReady = 0;
+ 			FINALIZE;
+ 		}
+diff -up rsyslog-8.2102.0/runtime/tcpsrv.c.orig rsyslog-8.2102.0/runtime/tcpsrv.c
+--- rsyslog-8.2102.0/runtime/tcpsrv.c.orig	2022-04-11 09:27:00.376245726 +0200
++++ rsyslog-8.2102.0/runtime/tcpsrv.c	2022-04-11 09:41:57.885777708 +0200
+@@ -609,14 +609,15 @@ doReceive(tcpsrv_t *pThis, tcps_sess_t *
+ 	int oserr = 0;
+ 
+ 	ISOBJ_TYPE_assert(pThis, tcpsrv);
+-	DBGPRINTF("netstream %p with new data\n", (*ppSess)->pStrm);
++	prop.GetString((*ppSess)->fromHostIP, &pszPeer, &lenPeer);
++	DBGPRINTF("netstream %p with new data from remote peer %s\n", (*ppSess)->pStrm, pszPeer);
+ 	/* Receive message */
+ 	iRet = pThis->pRcvData(*ppSess, buf, sizeof(buf), &iRcvd, &oserr);
+ 	switch(iRet) {
+ 	case RS_RET_CLOSED:
+ 		if(pThis->bEmitMsgOnClose) {
+ 			errno = 0;
+-			prop.GetString((*ppSess)->fromHostIP, &pszPeer, &lenPeer);
++			// prop.GetString((*ppSess)->fromHostIP, &pszPeer, &lenPeer);
+ 			LogError(0, RS_RET_PEER_CLOSED_CONN, "Netstream session %p closed by remote "
+ 				"peer %s.\n", (*ppSess)->pStrm, pszPeer);
+ 		}
+@@ -632,13 +633,13 @@ doReceive(tcpsrv_t *pThis, tcps_sess_t *
+ 			/* in this case, something went awfully wrong.
+ 			 * We are instructed to terminate the session.
+ 			 */
+-			prop.GetString((*ppSess)->fromHostIP, &pszPeer, &lenPeer);
++			// prop.GetString((*ppSess)->fromHostIP, &pszPeer, &lenPeer);
+ 			LogError(oserr, localRet, "Tearing down TCP Session from %s", pszPeer);
+ 			CHKiRet(closeSess(pThis, ppSess, pPoll));
+ 		}
+ 		break;
+ 	default:
+-		prop.GetString((*ppSess)->fromHostIP, &pszPeer, &lenPeer);
++		// prop.GetString((*ppSess)->fromHostIP, &pszPeer, &lenPeer);
+ 		LogError(oserr, iRet, "netstream session %p from %s will be closed due to error",
+ 				(*ppSess)->pStrm, pszPeer);
+ 		CHKiRet(closeSess(pThis, ppSess, pPoll));
+@@ -838,6 +839,7 @@ RunSelect(tcpsrv_t *pThis, nsd_epworkset
+ 		while(iTCPSess != -1) {
+ 			/* TODO: access to pNsd is NOT really CLEAN, use method... */
+ 			CHKiRet(nssel.Add(pSel, pThis->pSessions[iTCPSess]->pStrm, NSDSEL_RD));
++			DBGPRINTF("tcpsrv process session %d:\n", iTCPSess);
+ 			/* now get next... */
+ 			iTCPSess = TCPSessGetNxtSess(pThis, iTCPSess);
+ 		}

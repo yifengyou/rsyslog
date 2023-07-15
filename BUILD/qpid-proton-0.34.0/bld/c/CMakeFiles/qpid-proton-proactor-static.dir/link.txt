@@ -1,0 +1,2 @@
+/usr/bin/gcc-ar qc libqpid-proton-proactor-static.a CMakeFiles/qpid-proton-proactor-static.dir/src/proactor/epoll.c.o CMakeFiles/qpid-proton-proactor-static.dir/src/proactor/epoll_raw_connection.c.o CMakeFiles/qpid-proton-proactor-static.dir/src/proactor/epoll_timer.c.o CMakeFiles/qpid-proton-proactor-static.dir/src/proactor/proactor-internal.c.o CMakeFiles/qpid-proton-proactor-static.dir/src/proactor/netaddr-internal.c.o CMakeFiles/qpid-proton-proactor-static.dir/src/proactor/raw_connection.c.o
+/usr/bin/gcc-ranlib libqpid-proton-proactor-static.a

@@ -1,0 +1,26 @@
+diff -up rsyslog-8.2102.0/runtime/ratelimit.c.orig rsyslog-8.2102.0/runtime/ratelimit.c
+--- rsyslog-8.2102.0/runtime/ratelimit.c.orig	2021-07-27 10:37:50.972903104 +0200
++++ rsyslog-8.2102.0/runtime/ratelimit.c	2021-07-27 10:38:26.141002988 +0200
+@@ -235,7 +235,6 @@ ratelimitMsg(ratelimit_t *__restrict__ c
+ {
+ 	DEFiRet;
+ 	rsRetVal localRet;
+-	int severity = 0;
+ 
+ 	*ppRepMsg = NULL;
+ 
+@@ -246,13 +245,12 @@ ratelimitMsg(ratelimit_t *__restrict__ c
+ 				DBGPRINTF("Message discarded, parsing error %d\n", localRet);
+ 				ABORT_FINALIZE(RS_RET_DISCARDMSG);
+ 			}
+-			severity = pMsg->iSeverity;
+ 		}
+ 	}
+ 
+ 	/* Only the messages having severity level at or below the
+ 	 * treshold (the value is >=) are subject to ratelimiting. */
+-	if(ratelimit->interval && (severity >= ratelimit->severity)) {
++	if(ratelimit->interval && (pMsg->iSeverity >= ratelimit->severity)) {
+ 		char namebuf[512]; /* 256 for FGDN adn 256 for APPNAME should be enough */
+ 		snprintf(namebuf, sizeof namebuf, "%s:%s", getHOSTNAME(pMsg),
+ 			getAPPNAME(pMsg, 0));

@@ -1,0 +1,2 @@
+/root/rpmbuild/BUILD/qpid-proton-0.34.0/bld/CMakeFiles/CheckCXX/CMakeFiles/rebuild_cache.dir
+/root/rpmbuild/BUILD/qpid-proton-0.34.0/bld/CMakeFiles/CheckCXX/CMakeFiles/edit_cache.dir

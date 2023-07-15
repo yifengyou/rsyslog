@@ -1,0 +1,908 @@
+diff --git a/plugins/imdiag/imdiag.c b/plugins/imdiag/imdiag.c
+index 3e27ee4d36..d57dd5661c 100644
+--- a/plugins/imdiag/imdiag.c
++++ b/plugins/imdiag/imdiag.c
+@@ -566,28 +566,33 @@ setInjectDelayMode(void __attribute__((unused)) *pVal, uchar *const pszMode)
+ }
+ 
+ 
+-static rsRetVal addTCPListener(void __attribute__((unused)) *pVal, uchar *pNewVal)
++static rsRetVal
++addTCPListener(void __attribute__((unused)) *pVal, uchar *pNewVal)
+ {
++	tcpLstnParams_t *cnf_params = NULL;
+ 	DEFiRet;
+ 
+-	if(pOurTcpsrv == NULL) {
+-		CHKiRet(tcpsrv.Construct(&pOurTcpsrv));
+-		CHKiRet(tcpsrv.SetSessMax(pOurTcpsrv, iTCPSessMax));
+-		CHKiRet(tcpsrv.SetCBIsPermittedHost(pOurTcpsrv, isPermittedHost));
+-		CHKiRet(tcpsrv.SetCBRcvData(pOurTcpsrv, doRcvData));
+-		CHKiRet(tcpsrv.SetCBOpenLstnSocks(pOurTcpsrv, doOpenLstnSocks));
+-		CHKiRet(tcpsrv.SetCBOnRegularClose(pOurTcpsrv, onRegularClose));
+-		CHKiRet(tcpsrv.SetCBOnErrClose(pOurTcpsrv, onErrClose));
+-		CHKiRet(tcpsrv.SetDrvrMode(pOurTcpsrv, iStrmDrvrMode));
+-		CHKiRet(tcpsrv.SetOnMsgReceive(pOurTcpsrv, OnMsgReceived));
+-		CHKiRet(tcpsrv.SetLstnPortFileName(pOurTcpsrv, pszLstnPortFileName));
+-		/* now set optional params, but only if they were actually configured */
+-		if(pszStrmDrvrAuthMode != NULL) {
+-			CHKiRet(tcpsrv.SetDrvrAuthMode(pOurTcpsrv, pszStrmDrvrAuthMode));
+-		}
+-		if(pPermPeersRoot != NULL) {
+-			CHKiRet(tcpsrv.SetDrvrPermPeers(pOurTcpsrv, pPermPeersRoot));
+-		}
++	if(pOurTcpsrv != NULL) {
++		LogError(0, NO_ERRCODE, "imdiag: only a single listener is supported, "
++			"trying to add a second");
++		ABORT_FINALIZE(RS_RET_ERR);
++	}
++	CHKmalloc(cnf_params = (tcpLstnParams_t*) calloc(1, sizeof(tcpLstnParams_t)));
++	CHKiRet(tcpsrv.Construct(&pOurTcpsrv));
++	CHKiRet(tcpsrv.SetSessMax(pOurTcpsrv, iTCPSessMax));
++	CHKiRet(tcpsrv.SetCBIsPermittedHost(pOurTcpsrv, isPermittedHost));
++	CHKiRet(tcpsrv.SetCBRcvData(pOurTcpsrv, doRcvData));
++	CHKiRet(tcpsrv.SetCBOpenLstnSocks(pOurTcpsrv, doOpenLstnSocks));
++	CHKiRet(tcpsrv.SetCBOnRegularClose(pOurTcpsrv, onRegularClose));
++	CHKiRet(tcpsrv.SetCBOnErrClose(pOurTcpsrv, onErrClose));
++	CHKiRet(tcpsrv.SetDrvrMode(pOurTcpsrv, iStrmDrvrMode));
++	CHKiRet(tcpsrv.SetOnMsgReceive(pOurTcpsrv, OnMsgReceived));
++	/* now set optional params, but only if they were actually configured */
++	if(pszStrmDrvrAuthMode != NULL) {
++		CHKiRet(tcpsrv.SetDrvrAuthMode(pOurTcpsrv, pszStrmDrvrAuthMode));
++	}
++	if(pPermPeersRoot != NULL) {
++		CHKiRet(tcpsrv.SetDrvrPermPeers(pOurTcpsrv, pPermPeersRoot));
+ 	}
+ 
+ 	/* initialized, now add socket */
+@@ -595,7 +600,11 @@ static rsRetVal addTCPListener(void __attribute__((unused)) *pVal, uchar *pNewVa
+ 						UCHAR_CONSTANT("imdiag") : pszInputName));
+ 	CHKiRet(tcpsrv.SetOrigin(pOurTcpsrv, (uchar*)"imdiag"));
+ 	/* we support octect-counted frame (constant 1 below) */
+-	tcpsrv.configureTCPListen(pOurTcpsrv, pNewVal, 1, NULL, pszLstnPortFileName);
++	cnf_params->pszPort = pNewVal;
++	cnf_params->bSuppOctetFram = 1;
++	CHKmalloc(cnf_params->pszLstnPortFileName = (const uchar*) strdup((const char*)pszLstnPortFileName));
++	tcpsrv.configureTCPListen(pOurTcpsrv, cnf_params);
++	cnf_params = NULL;
+ 
+ finalize_it:
+ 	if(iRet != RS_RET_OK) {
+@@ -603,7 +612,7 @@ static rsRetVal addTCPListener(void __attribute__((unused)) *pVal, uchar *pNewVa
+ 		if(pOurTcpsrv != NULL)
+ 			tcpsrv.Destruct(&pOurTcpsrv);
+ 	}
+-	free(pNewVal);
++	free(cnf_params);
+ 	RETiRet;
+ }
+ 
+@@ -760,6 +769,7 @@ CODESTARTmodExit
+ 
+ 	/* free some globals to keep valgrind happy */
+ 	free(pszInputName);
++fprintf(stderr, "FINAL FREE %p\n", pszLstnPortFileName);
+ 	free(pszLstnPortFileName);
+ 	free(pszStrmDrvrAuthMode);
+ 
+diff --git a/plugins/imgssapi/imgssapi.c b/plugins/imgssapi/imgssapi.c
+index e0cab01664..4041e88b14 100644
+--- a/plugins/imgssapi/imgssapi.c
++++ b/plugins/imgssapi/imgssapi.c
+@@ -334,34 +334,38 @@ static rsRetVal
+ actGSSListener(uchar *port)
+ {
+ 	DEFiRet;
++	tcpLstnParams_t *cnf_params = NULL;
+ 	gsssrv_t *pGSrv = NULL;
+ 
+-	if(pOurTcpsrv == NULL) {
+-		/* first create/init the gsssrv "object" */
+-		if((pGSrv = calloc(1, sizeof(gsssrv_t))) == NULL)
+-			ABORT_FINALIZE(RS_RET_OUT_OF_MEMORY);
+-
+-		pGSrv->allowedMethods = ALLOWEDMETHOD_GSS;
+-		if(bPermitPlainTcp)
+-			pGSrv->allowedMethods |= ALLOWEDMETHOD_TCP;
+-		/* gsssrv initialized */
+-
+-		CHKiRet(tcpsrv.Construct(&pOurTcpsrv));
+-		CHKiRet(tcpsrv.SetUsrP(pOurTcpsrv, pGSrv));
+-		CHKiRet(tcpsrv.SetCBOnSessConstructFinalize(pOurTcpsrv, OnSessConstructFinalize));
+-		CHKiRet(tcpsrv.SetCBOnSessDestruct(pOurTcpsrv, OnSessDestruct));
+-		CHKiRet(tcpsrv.SetCBIsPermittedHost(pOurTcpsrv, isPermittedHost));
+-		CHKiRet(tcpsrv.SetCBRcvData(pOurTcpsrv, doRcvData));
+-		CHKiRet(tcpsrv.SetCBOpenLstnSocks(pOurTcpsrv, doOpenLstnSocks));
+-		CHKiRet(tcpsrv.SetCBOnSessAccept(pOurTcpsrv, onSessAccept));
+-		CHKiRet(tcpsrv.SetCBOnRegularClose(pOurTcpsrv, onRegularClose));
+-		CHKiRet(tcpsrv.SetCBOnErrClose(pOurTcpsrv, onErrClose));
+-		CHKiRet(tcpsrv.SetInputName(pOurTcpsrv, UCHAR_CONSTANT("imgssapi")));
+-		CHKiRet(tcpsrv.SetKeepAlive(pOurTcpsrv, bKeepAlive));
+-		CHKiRet(tcpsrv.SetOrigin(pOurTcpsrv, UCHAR_CONSTANT("imgssapi")));
+-		tcpsrv.configureTCPListen(pOurTcpsrv, port, 1, NULL, NULL);
+-		CHKiRet(tcpsrv.ConstructFinalize(pOurTcpsrv));
+-	}
++	assert(pOurTcpsrv == NULL);
++	CHKmalloc(cnf_params = (tcpLstnParams_t*) calloc(1, sizeof(tcpLstnParams_t)));
++	/* first create/init the gsssrv "object" */
++	if((pGSrv = calloc(1, sizeof(gsssrv_t))) == NULL)
++		ABORT_FINALIZE(RS_RET_OUT_OF_MEMORY);
++
++	pGSrv->allowedMethods = ALLOWEDMETHOD_GSS;
++	if(bPermitPlainTcp)
++		pGSrv->allowedMethods |= ALLOWEDMETHOD_TCP;
++	/* gsssrv initialized */
++
++	CHKiRet(tcpsrv.Construct(&pOurTcpsrv));
++	CHKiRet(tcpsrv.SetUsrP(pOurTcpsrv, pGSrv));
++	CHKiRet(tcpsrv.SetCBOnSessConstructFinalize(pOurTcpsrv, OnSessConstructFinalize));
++	CHKiRet(tcpsrv.SetCBOnSessDestruct(pOurTcpsrv, OnSessDestruct));
++	CHKiRet(tcpsrv.SetCBIsPermittedHost(pOurTcpsrv, isPermittedHost));
++	CHKiRet(tcpsrv.SetCBRcvData(pOurTcpsrv, doRcvData));
++	CHKiRet(tcpsrv.SetCBOpenLstnSocks(pOurTcpsrv, doOpenLstnSocks));
++	CHKiRet(tcpsrv.SetCBOnSessAccept(pOurTcpsrv, onSessAccept));
++	CHKiRet(tcpsrv.SetCBOnRegularClose(pOurTcpsrv, onRegularClose));
++	CHKiRet(tcpsrv.SetCBOnErrClose(pOurTcpsrv, onErrClose));
++	CHKiRet(tcpsrv.SetInputName(pOurTcpsrv, UCHAR_CONSTANT("imgssapi")));
++	CHKiRet(tcpsrv.SetKeepAlive(pOurTcpsrv, bKeepAlive));
++	CHKiRet(tcpsrv.SetOrigin(pOurTcpsrv, UCHAR_CONSTANT("imgssapi")));
++	cnf_params->pszPort = port;
++	cnf_params->bSuppOctetFram = 1;
++	tcpsrv.configureTCPListen(pOurTcpsrv, cnf_params);
++	CHKiRet(tcpsrv.ConstructFinalize(pOurTcpsrv));
++	cnf_params = NULL;
+ 
+ finalize_it:
+ 	if(iRet != RS_RET_OK) {
+@@ -370,6 +374,7 @@ actGSSListener(uchar *port)
+ 			tcpsrv.Destruct(&pOurTcpsrv);
+ 		free(pGSrv);
+ 	}
++	free(cnf_params);
+ 	RETiRet;
+ }
+ 
+diff --git a/plugins/imtcp/imtcp.c b/plugins/imtcp/imtcp.c
+index cf74d4c616..c336e6c24d 100644
+--- a/plugins/imtcp/imtcp.c
++++ b/plugins/imtcp/imtcp.c
+@@ -4,7 +4,7 @@
+  * File begun on 2007-12-21 by RGerhards (extracted from syslogd.c,
+  * which at the time of the rsyslog fork was BSD-licensed)
+  *
+- * Copyright 2007-2017 Adiscon GmbH.
++ * Copyright 2007-2020 Adiscon GmbH.
+  *
+  * This file is part of rsyslog.
+  *
+@@ -112,9 +112,7 @@ static struct configSettings_s {
+ } cs;
+ 
+ struct instanceConf_s {
+-	uchar *pszBindPort;		/* port to bind to */
+-	uchar *pszLstnPortFileName;	/* file dynamic port is written to */
+-	uchar *pszBindAddr;             /* IP to bind socket to */
++	tcpLstnParams_t *cnf_params;	/**< listener config parameters */
+ 	uchar *pszBindRuleset;		/* name of ruleset to bind to */
+ 	ruleset_t *pBindRuleset;	/* ruleset to bind listener to (use system default if unspecified) */
+ 	uchar *pszInputName;		/* value for inputname property, NULL is OK and handled by core engine */
+@@ -122,7 +120,6 @@ struct instanceConf_s {
+ 	sbool bSPFramingFix;
+ 	unsigned int ratelimitInterval;
+ 	unsigned int ratelimitBurst;
+-	int bSuppOctetFram;
+ 	struct instanceConf_s *next;
+ };
+ 
+@@ -288,19 +285,20 @@ setPermittedPeer(void __attribute__((unused)) *pVal, uchar *pszID)
+ static rsRetVal
+ createInstance(instanceConf_t **pinst)
+ {
+-	instanceConf_t *inst;
++	instanceConf_t *inst = NULL;
++
+ 	DEFiRet;
+ 	CHKmalloc(inst = malloc(sizeof(instanceConf_t)));
++	CHKmalloc(inst->cnf_params = (tcpLstnParams_t*) calloc(1, sizeof(tcpLstnParams_t)));
+ 	inst->next = NULL;
+ 	inst->pszBindRuleset = NULL;
+ 	inst->pszInputName = NULL;
+-	inst->pszBindAddr = NULL;
+ 	inst->dfltTZ = NULL;
+-	inst->bSuppOctetFram = -1; /* unset */
++	inst->cnf_params->bSuppOctetFram = -1; /* unset */
+ 	inst->bSPFramingFix = 0;
+ 	inst->ratelimitInterval = 0;
+ 	inst->ratelimitBurst = 10000;
+-	inst->pszLstnPortFileName = NULL;
++	inst->cnf_params->pszLstnPortFileName = NULL;
+ 
+ 	/* node created, let's add to config */
+ 	if(loadModConf->tail == NULL) {
+@@ -312,6 +310,9 @@ createInstance(instanceConf_t **pinst)
+ 
+ 	*pinst = inst;
+ finalize_it:
++	if(iRet != RS_RET_OK) {
++		free(inst);
++	}
+ 	RETiRet;
+ }
+ 
+@@ -328,7 +329,7 @@ static rsRetVal addInstance(void __attribute__((unused)) *pVal, uchar *pNewVal)
+ 
+ 	CHKiRet(createInstance(&inst));
+ 
+-	CHKmalloc(inst->pszBindPort = ustrdup((pNewVal == NULL || *pNewVal == '\0')
++	CHKmalloc(inst->cnf_params->pszPort = ustrdup((pNewVal == NULL || *pNewVal == '\0')
+ 				 	       ? (uchar*) "10514" : pNewVal));
+ 	if((cs.pszBindRuleset == NULL) || (cs.pszBindRuleset[0] == '\0')) {
+ 		inst->pszBindRuleset = NULL;
+@@ -336,14 +337,14 @@ static rsRetVal addInstance(void __attribute__((unused)) *pVal, uchar *pNewVal)
+ 		CHKmalloc(inst->pszBindRuleset = ustrdup(cs.pszBindRuleset));
+ 	}
+ 	if((cs.lstnIP == NULL) || (cs.lstnIP[0] == '\0')) {
+-		inst->pszBindAddr = NULL;
++		inst->cnf_params->pszAddr = NULL;
+ 	} else {
+-		CHKmalloc(inst->pszBindAddr = ustrdup(cs.lstnIP));
++		CHKmalloc(inst->cnf_params->pszAddr = ustrdup(cs.lstnIP));
+ 	}
+ 	if((cs.lstnPortFile == NULL) || (cs.lstnPortFile[0] == '\0')) {
+-		inst->pszBindAddr = NULL;
++		inst->cnf_params->pszAddr = NULL;
+ 	} else {
+-		CHKmalloc(inst->pszLstnPortFileName = ustrdup(cs.lstnPortFile));
++		CHKmalloc(inst->cnf_params->pszLstnPortFileName = ustrdup(cs.lstnPortFile));
+ 	}
+ 
+ 	if((cs.pszInputName == NULL) || (cs.pszInputName[0] == '\0')) {
+@@ -351,7 +352,7 @@ static rsRetVal addInstance(void __attribute__((unused)) *pVal, uchar *pNewVal)
+ 	} else {
+ 		CHKmalloc(inst->pszInputName = ustrdup(cs.pszInputName));
+ 	}
+-	inst->bSuppOctetFram = cs.bSuppOctetFram;
++	inst->cnf_params->bSuppOctetFram = cs.bSuppOctetFram;
+ 
+ finalize_it:
+ 	free(pNewVal);
+@@ -407,7 +408,7 @@ addListner(modConfData_t *modConf, instanceConf_t *inst)
+ 	}
+ 
+ 	/* initialized, now add socket and listener params */
+-	DBGPRINTF("imtcp: trying to add port *:%s\n", inst->pszBindPort);
++	DBGPRINTF("imtcp: trying to add port *:%s\n", inst->cnf_params->pszPort);
+ 	CHKiRet(tcpsrv.SetRuleset(pOurTcpsrv, inst->pBindRuleset));
+ 	CHKiRet(tcpsrv.SetInputName(pOurTcpsrv, inst->pszInputName == NULL ?
+ 						UCHAR_CONSTANT("imtcp") : inst->pszInputName));
+@@ -416,12 +417,12 @@ addListner(modConfData_t *modConf, instanceConf_t *inst)
+ 	CHKiRet(tcpsrv.SetbSPFramingFix(pOurTcpsrv, inst->bSPFramingFix));
+ 	CHKiRet(tcpsrv.SetLinuxLikeRatelimiters(pOurTcpsrv, inst->ratelimitInterval, inst->ratelimitBurst));
+ 
+-	if((ustrcmp(inst->pszBindPort, UCHAR_CONSTANT("0")) == 0 && inst->pszLstnPortFileName == NULL)
+-			|| ustrcmp(inst->pszBindPort, UCHAR_CONSTANT("0")) < 0) {
+-		CHKmalloc(inst->pszBindPort = (uchar*)strdup("514"));
++	if((ustrcmp(inst->cnf_params->pszPort, UCHAR_CONSTANT("0")) == 0
++		&& inst->cnf_params->pszLstnPortFileName == NULL)
++			|| ustrcmp(inst->cnf_params->pszPort, UCHAR_CONSTANT("0")) < 0) {
++		CHKmalloc(inst->cnf_params->pszPort = (uchar*)strdup("514"));
+ 	}
+-	tcpsrv.configureTCPListen(pOurTcpsrv, inst->pszBindPort, inst->bSuppOctetFram,
+-		inst->pszBindAddr, inst->pszLstnPortFileName);
++	tcpsrv.configureTCPListen(pOurTcpsrv, inst->cnf_params);
+ 
+ finalize_it:
+ 	if(iRet != RS_RET_OK) {
+@@ -456,9 +457,9 @@ CODESTARTnewInpInst
+ 		if(!pvals[i].bUsed)
+ 			continue;
+ 		if(!strcmp(inppblk.descr[i].name, "port")) {
+-			inst->pszBindPort = (uchar*)es_str2cstr(pvals[i].val.d.estr, NULL);
++			inst->cnf_params->pszPort = (uchar*)es_str2cstr(pvals[i].val.d.estr, NULL);
+ 		} else if(!strcmp(inppblk.descr[i].name, "address")) {
+-			inst->pszBindAddr = (uchar*)es_str2cstr(pvals[i].val.d.estr, NULL);
++			inst->cnf_params->pszAddr = (uchar*)es_str2cstr(pvals[i].val.d.estr, NULL);
+ 		} else if(!strcmp(inppblk.descr[i].name, "name")) {
+ 			inst->pszInputName = (uchar*)es_str2cstr(pvals[i].val.d.estr, NULL);
+ 		} else if(!strcmp(inppblk.descr[i].name, "defaulttz")) {
+@@ -468,13 +469,13 @@ CODESTARTnewInpInst
+ 		} else if(!strcmp(inppblk.descr[i].name, "ruleset")) {
+ 			inst->pszBindRuleset = (uchar*)es_str2cstr(pvals[i].val.d.estr, NULL);
+ 		} else if(!strcmp(inppblk.descr[i].name, "supportoctetcountedframing")) {
+-			inst->bSuppOctetFram = (int) pvals[i].val.d.n;
++			inst->cnf_params->bSuppOctetFram = (int) pvals[i].val.d.n;
+ 		} else if(!strcmp(inppblk.descr[i].name, "ratelimit.burst")) {
+ 			inst->ratelimitBurst = (unsigned int) pvals[i].val.d.n;
+ 		} else if(!strcmp(inppblk.descr[i].name, "ratelimit.interval")) {
+ 			inst->ratelimitInterval = (unsigned int) pvals[i].val.d.n;
+ 		} else if(!strcmp(inppblk.descr[i].name, "listenportfilename")) {
+-			inst->pszLstnPortFileName = (uchar*)es_str2cstr(pvals[i].val.d.estr, NULL);
++			inst->cnf_params->pszLstnPortFileName = (uchar*)es_str2cstr(pvals[i].val.d.estr, NULL);
+ 		} else {
+ 			dbgprintf("imtcp: program error, non-handled "
+ 			  "param '%s'\n", inppblk.descr[i].name);
+@@ -656,7 +657,7 @@ std_checkRuleset_genErrMsg(__attribute__((unused)) modConfData_t *modConf, insta
+ {
+ 	LogError(0, NO_ERRCODE, "imtcp: ruleset '%s' for port %s not found - "
+ 			"using default ruleset instead", inst->pszBindRuleset,
+-			inst->pszBindPort);
++			inst->cnf_params->pszPort);
+ }
+ 
+ BEGINcheckCnf
+@@ -664,8 +665,8 @@ BEGINcheckCnf
+ CODESTARTcheckCnf
+ 	for(inst = pModConf->root ; inst != NULL ; inst = inst->next) {
+ 		std_checkRuleset(pModConf, inst);
+-		if(inst->bSuppOctetFram == FRAMING_UNSET)
+-			inst->bSuppOctetFram = pModConf->bSuppOctetFram;
++		if(inst->cnf_params->bSuppOctetFram == FRAMING_UNSET)
++			inst->cnf_params->bSuppOctetFram = pModConf->bSuppOctetFram;
+ 	}
+ 	if(pModConf->root == NULL) {
+ 		LogError(0, RS_RET_NO_LISTNERS , "imtcp: module loaded, but "
+@@ -713,12 +714,9 @@ CODESTARTfreeCnf
+ 		free(pModConf->permittedPeers);
+ 	}
+ 	for(inst = pModConf->root ; inst != NULL ; ) {
+-		free(inst->pszBindPort);
+-		free(inst->pszLstnPortFileName);
+-		free(inst->pszBindAddr);
+-		free(inst->pszBindRuleset);
+-		free(inst->pszInputName);
+-		free(inst->dfltTZ);
++		free((void*)inst->pszBindRuleset);
++		free((void*)inst->pszInputName);
++		free((void*)inst->dfltTZ);
+ 		del = inst;
+ 		inst = inst->next;
+ 		free(del);
+diff --git a/runtime/netstrm.c b/runtime/netstrm.c
+index 8a394a02eb..2c1db46378 100644
+--- a/runtime/netstrm.c
++++ b/runtime/netstrm.c
+@@ -12,12 +12,18 @@
+  * to carry out its work (including, and most importantly, transport
+  * drivers).
+  *
++ * Note on processing:
++ * - Initiating a listener may be driver-specific, but in regard to TLS/non-TLS
++ *   it actually is not. This is because TLS is negotiated after a connection
++ *   has been established. So it is the "acceptConnReq" driver entry where TLS
++ *   params need to be applied.
++ *
+  * Work on this module begun 2008-04-17 by Rainer Gerhards. This code
+  * borrows from librelp's tcp.c/.h code. librelp is dual licensed and
+  * Rainer Gerhards and Adiscon GmbH have agreed to permit using the code
+  * under the terms of the GNU Lesser General Public License.
+  *
+- * Copyright 2007-2009 Rainer Gerhards and Adiscon GmbH.
++ * Copyright 2007-2020 Rainer Gerhards and Adiscon GmbH.
+  *
+  * This file is part of the rsyslog runtime library.
+  *
+@@ -134,18 +140,17 @@ AcceptConnReq(netstrm_t *pThis, netstrm_t **ppNew)
+  * pLstnPort must point to a port name or number. NULL is NOT permitted.
+  * rgerhards, 2008-04-22
+  */
+-static rsRetVal
++static rsRetVal ATTR_NONNULL(1,3,5)
+ LstnInit(netstrms_t *pNS, void *pUsr, rsRetVal(*fAddLstn)(void*,netstrm_t*),
+-	 uchar *pLstnPort, uchar *pLstnIP, int iSessMax,
+-	 uchar *pszLstnPortFileName)
++	 const int iSessMax, const tcpLstnParams_t *const cnf_params)
+ {
+ 	DEFiRet;
+ 
+ 	ISOBJ_TYPE_assert(pNS, netstrms);
+ 	assert(fAddLstn != NULL);
+-	assert(pLstnPort != NULL);
++	assert(cnf_params->pszPort != NULL);
+ 
+-	CHKiRet(pNS->Drvr.LstnInit(pNS, pUsr, fAddLstn, pLstnPort, pLstnIP, iSessMax, pszLstnPortFileName));
++	CHKiRet(pNS->Drvr.LstnInit(pNS, pUsr, fAddLstn, iSessMax, cnf_params));
+ 
+ finalize_it:
+ 	RETiRet;
+diff --git a/runtime/netstrm.h b/runtime/netstrm.h
+index 2e28d7e2e6..4ca35805e7 100644
+--- a/runtime/netstrm.h
++++ b/runtime/netstrm.h
+@@ -1,6 +1,6 @@
+ /* Definitions for the stream-based netstrmworking class.
+  *
+- * Copyright 2007, 2008 Rainer Gerhards and Adiscon GmbH.
++ * Copyright 2007-2020 Rainer Gerhards and Adiscon GmbH.
+  *
+  * This file is part of the rsyslog runtime library.
+  *
+@@ -24,6 +24,7 @@
+ #ifndef INCLUDED_NETSTRM_H
+ #define INCLUDED_NETSTRM_H
+ 
++#include "tcpsrv.h"
+ #include "netstrms.h"
+ 
+ /* the netstrm object */
+@@ -31,6 +32,7 @@ struct netstrm_s {
+ 	BEGINobjInstance;	/* Data to implement generic object - MUST be the first data element! */
+ 	nsd_t *pDrvrData;	/**< the driver's data elements (at most other places, this is called pNsd) */
+ 	nsd_if_t Drvr;		/**< our stream driver */
++	uchar *pszDrvrAuthMode;	/**< auth mode of the stream driver to use */
+ 	void *pUsr;		/**< pointer to user-provided data structure */
+ 	netstrms_t *pNS;	/**< pointer to our netstream subsystem object */
+ };
+@@ -76,8 +78,8 @@ BEGINinterface(netstrm) /* name must also be changed in ENDinterface macro! */
+ 	rsRetVal (*SetKeepAliveIntvl)(netstrm_t *pThis, int keepAliveIntvl);
+ 	rsRetVal (*SetGnutlsPriorityString)(netstrm_t *pThis, uchar *priorityString);
+ 	/* v11 -- Parameter pszLstnFileName added to LstnInit*/
+-	rsRetVal (*LstnInit)(netstrms_t *pNS, void *pUsr, rsRetVal(*)(void*,netstrm_t*),
+-		             uchar *pLstnPort, uchar *pLstnIP, int iSessMax, uchar *pszLstnPortFileName);
++	rsRetVal (ATTR_NONNULL(1,3,5) *LstnInit)(netstrms_t *pNS, void *pUsr, rsRetVal(*)(void*,netstrm_t*),
++			 const int iSessMax, const tcpLstnParams_t *const cnf_params);
+ 	/* v12 -- two new binary flags added to gtls driver enabling stricter operation */
+ 	rsRetVal (*SetDrvrCheckExtendedKeyUsage)(netstrm_t *pThis, int ChkExtendedKeyUsage);
+ 	rsRetVal (*SetDrvrPrioritizeSAN)(netstrm_t *pThis, int prioritizeSan);
+diff --git a/runtime/nsd.h b/runtime/nsd.h
+index e862348fd6..eecffed05e 100644
+--- a/runtime/nsd.h
++++ b/runtime/nsd.h
+@@ -84,8 +84,8 @@ BEGINinterface(nsd) /* name must also be changed in ENDinterface macro! */
+ 	rsRetVal (*SetKeepAliveTime)(nsd_t *pThis, int keepAliveTime);
+ 	rsRetVal (*SetGnutlsPriorityString)(nsd_t *pThis, uchar *gnutlsPriorityString);
+ 	/* v12 -- parameter pszLstnPortFileName added to LstnInit()*/
+-	rsRetVal (*LstnInit)(netstrms_t *pNS, void *pUsr, rsRetVal(*fAddLstn)(void*,netstrm_t*),
+-				 uchar *pLstnPort, uchar *pLstnIP, int iSessMax, uchar *pszLstnPortFileName);
++	rsRetVal (ATTR_NONNULL(1,3,5) *LstnInit)(netstrms_t *pNS, void *pUsr, rsRetVal(*)(void*,netstrm_t*),
++			 const int iSessMax, const tcpLstnParams_t *const cnf_params);
+ 	/* v13 -- two new binary flags added to gtls driver enabling stricter operation */
+ 	rsRetVal (*SetCheckExtendedKeyUsage)(nsd_t *pThis, int ChkExtendedKeyUsage);
+ 	rsRetVal (*SetPrioritizeSAN)(nsd_t *pThis, int prioritizeSan);
+diff --git a/runtime/nsd_gtls.c b/runtime/nsd_gtls.c
+index da90c2e096..55f6713d62 100644
+--- a/runtime/nsd_gtls.c
++++ b/runtime/nsd_gtls.c
+@@ -1692,14 +1692,13 @@ Abort(nsd_t *pNsd)
+  * a session, but not during listener setup.
+  * gerhards, 2008-04-25
+  */
+-static rsRetVal
++static rsRetVal ATTR_NONNULL(1,3,5)
+ LstnInit(netstrms_t *pNS, void *pUsr, rsRetVal(*fAddLstn)(void*,netstrm_t*),
+-	 uchar *pLstnPort, uchar *pLstnIP, int iSessMax,
+-	 uchar *pszLstnPortFileName)
++	 const int iSessMax, const tcpLstnParams_t *const cnf_params)
+ {
+ 	DEFiRet;
+ 	CHKiRet(gtlsGlblInitLstn());
+-	iRet = nsd_ptcp.LstnInit(pNS, pUsr, fAddLstn, pLstnPort, pLstnIP, iSessMax, pszLstnPortFileName);
++	iRet = nsd_ptcp.LstnInit(pNS, pUsr, fAddLstn, iSessMax, cnf_params);
+ finalize_it:
+ 	RETiRet;
+ }
+@@ -1785,6 +1784,7 @@ AcceptConnReq(nsd_t *pNsd, nsd_t **ppNew)
+ 		FINALIZE;
+ 	}
+ 	/* copy Properties to pnew first */
++dbgprintf("RGER: pThis %p pNew %p, authMode %d\n", pThis, pNew, pThis->authMode);
+ 	pNew->authMode = pThis->authMode;
+ 	pNew->permitExpiredCerts = pThis->permitExpiredCerts;
+ 	pNew->pPermPeers = pThis->pPermPeers;
+diff --git a/runtime/nsd_ossl.c b/runtime/nsd_ossl.c
+index 431ea738b8..79347916e4 100644
+--- a/runtime/nsd_ossl.c
++++ b/runtime/nsd_ossl.c
+@@ -1308,16 +1308,15 @@ Abort(nsd_t *pNsd)
+  */
+ static rsRetVal
+ LstnInit(netstrms_t *pNS, void *pUsr, rsRetVal(*fAddLstn)(void*,netstrm_t*),
+-	 uchar *pLstnPort, uchar *pLstnIP, int iSessMax, uchar *pszLstnPortFileName)
++	 const int iSessMax, const tcpLstnParams_t *const cnf_params)
+ {
+ 	DEFiRet;
+ 
+ 	dbgprintf("LstnInit for openssl: entering LstnInit (%p) for %s:%s SessMax=%d\n",
+-		fAddLstn, pLstnIP, pLstnPort, iSessMax);
++		fAddLstn, cnf_params->pszAddr, cnf_params->pszPort, iSessMax);
+ 
+ 	/* Init TCP Listener using base ptcp class */
+-	iRet = nsd_ptcp.LstnInit(pNS, pUsr, fAddLstn, pLstnPort, pLstnIP,
+-			iSessMax, pszLstnPortFileName);
++	iRet = nsd_ptcp.LstnInit(pNS, pUsr, fAddLstn, iSessMax, cnf_params);
+ 	RETiRet;
+ }
+ 
+diff --git a/runtime/nsd_ptcp.c b/runtime/nsd_ptcp.c
+index c35138fb7a..2f9e77ba03 100644
+--- a/runtime/nsd_ptcp.c
++++ b/runtime/nsd_ptcp.c
+@@ -474,10 +474,9 @@ AcceptConnReq(nsd_t *pNsd, nsd_t **ppNew)
+  * number of sessions permitted.
+  * rgerhards, 2008-04-22
+  */
+-static rsRetVal
++static rsRetVal ATTR_NONNULL(1,3,5)
+ LstnInit(netstrms_t *pNS, void *pUsr, rsRetVal(*fAddLstn)(void*,netstrm_t*),
+-	 uchar *pLstnPort, uchar *pLstnIP, int iSessMax,
+-	 uchar *pszLstnPortFileName)
++	 const int iSessMax, const tcpLstnParams_t *const cnf_params)
+ {
+ 	DEFiRet;
+ 	netstrm_t *pNewStrm = NULL;
+@@ -497,20 +496,20 @@ LstnInit(netstrms_t *pNS, void *pUsr, rsRetVal(*fAddLstn)(void*,netstrm_t*),
+ 
+ 	ISOBJ_TYPE_assert(pNS, netstrms);
+ 	assert(fAddLstn != NULL);
+-	assert(pLstnPort != NULL);
++	assert(cnf_params->pszPort != NULL);
+ 	assert(iSessMax >= 0);
+ 
+-	dbgprintf("creating tcp listen socket on port %s\n", pLstnPort);
++	dbgprintf("creating tcp listen socket on port %s\n", cnf_params->pszPort);
+ 
+ 	memset(&hints, 0, sizeof(hints));
+ 	hints.ai_flags = AI_PASSIVE;
+ 	hints.ai_family = glbl.GetDefPFFamily();
+ 	hints.ai_socktype = SOCK_STREAM;
+ 
+-	error = getaddrinfo((char*)pLstnIP, (char*) pLstnPort, &hints, &res);
++	error = getaddrinfo((const char*)cnf_params->pszAddr, (const char*) cnf_params->pszPort, &hints, &res);
+ 	if(error) {
+ 		LogError(0, RS_RET_INVALID_PORT, "error querying port '%s': %s",
+-			pLstnPort, gai_strerror(error));
++			cnf_params->pszAddr, gai_strerror(error));
+ 		ABORT_FINALIZE(RS_RET_INVALID_PORT);
+ 	}
+ 
+@@ -622,9 +621,9 @@ LstnInit(netstrms_t *pNS, void *pUsr, rsRetVal(*fAddLstn)(void*,netstrm_t*),
+ 			r->ai_addrlen = socklen_r;
+ 			savecast.sa = (struct sockaddr*)r->ai_addr;
+ 			port_override = (isIPv6) ?  savecast.ipv6->sin6_port : savecast.ipv4->sin_port;
+-			if(pszLstnPortFileName != NULL) {
++			if(cnf_params->pszLstnPortFileName != NULL) {
+ 				FILE *fp;
+-				if((fp = fopen((const char*)pszLstnPortFileName, "w+")) == NULL) {
++				if((fp = fopen((const char*)cnf_params->pszLstnPortFileName, "w+")) == NULL) {
+ 					LogError(errno, RS_RET_IO_ERROR, "nsd_ptcp: ListenPortFileName: "
+ 							"error while trying to open file");
+ 					ABORT_FINALIZE(RS_RET_IO_ERROR);
+diff --git a/runtime/nsd_ptcp.h b/runtime/nsd_ptcp.h
+index 137b7c3ce7..1c91718c19 100644
+--- a/runtime/nsd_ptcp.h
++++ b/runtime/nsd_ptcp.h
+@@ -1,6 +1,6 @@
+ /* An implementation of the nsd interface for plain tcp sockets.
+  *
+- * Copyright 2007-2012 Adiscon GmbH.
++ * Copyright 2007-2020 Adiscon GmbH.
+  *
+  * This file is part of the rsyslog runtime library.
+  *
+@@ -23,6 +23,7 @@
+ #define INCLUDED_NSD_PTCP_H
+ 
+ #include <sys/socket.h>
++#include "tcpsrv.h"
+ 
+ #include "nsd.h"
+ typedef nsd_if_t nsd_ptcp_if_t; /* we just *implement* this interface */
+diff --git a/runtime/tcps_sess.c b/runtime/tcps_sess.c
+index 58528c81ec..845e944582 100644
+--- a/runtime/tcps_sess.c
++++ b/runtime/tcps_sess.c
+@@ -194,8 +194,8 @@ SetLstnInfo(tcps_sess_t *pThis, tcpLstnPortList_t *pLstnInfo)
+ 	assert(pLstnInfo != NULL);
+ 	pThis->pLstnInfo = pLstnInfo;
+ 	/* set cached elements */
+-	pThis->bSuppOctetFram = pLstnInfo->bSuppOctetFram;
+-	pThis->bSPFramingFix = pLstnInfo->bSPFramingFix;
++	pThis->bSuppOctetFram = pLstnInfo->cnf_params->bSuppOctetFram;
++	pThis->bSPFramingFix = pLstnInfo->cnf_params->bSPFramingFix;
+ 	RETiRet;
+ }
+ 
+@@ -235,6 +235,7 @@ defaultDoSubmitMessage(tcps_sess_t *pThis, struct syslogTime *stTime, time_t ttG
+ 	DEFiRet;
+ 
+ 	ISOBJ_TYPE_assert(pThis, tcps_sess);
++	const tcpLstnParams_t *const cnf_params = pThis->pLstnInfo->cnf_params;
+ 	
+ 	if(pThis->iMsg == 0) {
+ 		DBGPRINTF("discarding zero-sized message\n");
+@@ -249,15 +250,15 @@ defaultDoSubmitMessage(tcps_sess_t *pThis, struct syslogTime *stTime, time_t ttG
+ 	/* we now create our own message object and submit it to the queue */
+ 	CHKiRet(msgConstructWithTime(&pMsg, stTime, ttGenTime));
+ 	MsgSetRawMsg(pMsg, (char*)pThis->pMsg, pThis->iMsg);
+-	MsgSetInputName(pMsg, pThis->pLstnInfo->pInputName);
+-	if(pThis->pLstnInfo->dfltTZ[0] != '\0')
+-		MsgSetDfltTZ(pMsg, (char*) pThis->pLstnInfo->dfltTZ);
++	MsgSetInputName(pMsg, cnf_params->pInputName);
++	if(cnf_params->dfltTZ[0] != '\0')
++		MsgSetDfltTZ(pMsg, (char*) cnf_params->dfltTZ);
+ 	MsgSetFlowControlType(pMsg, pThis->pSrv->bUseFlowControl
+ 			            ? eFLOWCTL_LIGHT_DELAY : eFLOWCTL_NO_DELAY);
+ 	pMsg->msgFlags  = NEEDS_PARSING | PARSE_HOSTNAME;
+ 	MsgSetRcvFrom(pMsg, pThis->fromHost);
+ 	CHKiRet(MsgSetRcvFromIP(pMsg, pThis->fromHostIP));
+-	MsgSetRuleset(pMsg, pThis->pLstnInfo->pRuleset);
++	MsgSetRuleset(pMsg, cnf_params->pRuleset);
+ 
+ 	STATSCOUNTER_INC(pThis->pLstnInfo->ctrSubmit, pThis->pLstnInfo->mutCtrSubmit);
+ 	ratelimitAddMsg(pThis->pLstnInfo->ratelimiter, pMultiSub, pMsg);
+diff --git a/runtime/tcpsrv.c b/runtime/tcpsrv.c
+index 76a50357c3..ab9573e5b8 100644
+--- a/runtime/tcpsrv.c
++++ b/runtime/tcpsrv.c
+@@ -123,9 +123,7 @@ static int wrkrRunning;
+  * rgerhards, 2009-05-21
+  */
+ static rsRetVal ATTR_NONNULL(1, 2)
+-addNewLstnPort(tcpsrv_t *const pThis, const uchar *const pszPort,
+-	const int bSuppOctetFram, const uchar *const pszAddr,
+-	const uchar *const pszLstnPortFileName)
++addNewLstnPort(tcpsrv_t *const pThis, tcpLstnParams_t *const cnf_params)
+ {
+ 	tcpLstnPortList_t *pEntry;
+ 	uchar statname[64];
+@@ -135,25 +133,17 @@ addNewLstnPort(tcpsrv_t *const pThis, const uchar *const pszPort,
+ 
+ 	/* create entry */
+ 	CHKmalloc(pEntry = (tcpLstnPortList_t*)calloc(1, sizeof(tcpLstnPortList_t)));
+-	CHKmalloc(pEntry->pszPort = ustrdup(pszPort));
++	pEntry->cnf_params = cnf_params;
+ 
+-	pEntry->pszAddr = NULL;
+-	/* only if a bind adress is defined copy it in struct */
+-	if (pszAddr != NULL) {
+-		CHKmalloc(pEntry->pszAddr = ustrdup(pszAddr));
+-	}
+-
+-	strcpy((char*)pEntry->dfltTZ, (char*)pThis->dfltTZ);
+-	pEntry->bSPFramingFix = pThis->bSPFramingFix;
++	strcpy((char*)pEntry->cnf_params->dfltTZ, (char*)pThis->dfltTZ);
++	pEntry->cnf_params->bSPFramingFix = pThis->bSPFramingFix;
++	pEntry->cnf_params->pRuleset = pThis->pRuleset;
+ 	pEntry->pSrv = pThis;
+-	pEntry->pRuleset = pThis->pRuleset;
+-	pEntry->bSuppOctetFram = bSuppOctetFram;
+-	pEntry->pszLstnPortFileName = pszLstnPortFileName;
+ 
+ 	/* we need to create a property */
+-	CHKiRet(prop.Construct(&pEntry->pInputName));
+-	CHKiRet(prop.SetString(pEntry->pInputName, pThis->pszInputName, ustrlen(pThis->pszInputName)));
+-	CHKiRet(prop.ConstructFinalize(pEntry->pInputName));
++	CHKiRet(prop.Construct(&pEntry->cnf_params->pInputName));
++	CHKiRet(prop.SetString(pEntry->cnf_params->pInputName, pThis->pszInputName, ustrlen(pThis->pszInputName)));
++	CHKiRet(prop.ConstructFinalize(pEntry->cnf_params->pInputName));
+ 
+ 	/* support statistics gathering */
+ 	CHKiRet(ratelimitNew(&pEntry->ratelimiter, "tcperver", NULL));
+@@ -161,7 +151,7 @@ addNewLstnPort(tcpsrv_t *const pThis, const uchar *const pszPort,
+ 	ratelimitSetThreadSafe(pEntry->ratelimiter);
+ 
+ 	CHKiRet(statsobj.Construct(&(pEntry->stats)));
+-	snprintf((char*)statname, sizeof(statname), "%s(%s)", pThis->pszInputName, pszPort);
++	snprintf((char*)statname, sizeof(statname), "%s(%s)", pThis->pszInputName, cnf_params->pszPort);
+ 	statname[sizeof(statname)-1] = '\0'; /* just to be on the save side... */
+ 	CHKiRet(statsobj.SetName(pEntry->stats, statname));
+ 	CHKiRet(statsobj.SetOrigin(pEntry->stats, pThis->pszOrigin));
+@@ -177,10 +167,8 @@ addNewLstnPort(tcpsrv_t *const pThis, const uchar *const pszPort,
+ finalize_it:
+ 	if(iRet != RS_RET_OK) {
+ 		if(pEntry != NULL) {
+-			free(pEntry->pszAddr);
+-			free(pEntry->pszPort);
+-			if(pEntry->pInputName != NULL) {
+-				prop.Destruct(&pEntry->pInputName);
++			if(pEntry->cnf_params->pInputName != NULL) {
++				prop.Destruct(&pEntry->cnf_params->pInputName);
+ 			}
+ 			if(pEntry->ratelimiter != NULL) {
+ 				ratelimitDestruct(pEntry->ratelimiter);
+@@ -201,29 +189,25 @@ addNewLstnPort(tcpsrv_t *const pThis, const uchar *const pszPort,
+  * rgerhards, 2008-03-20
+  */
+ static rsRetVal ATTR_NONNULL(1,2)
+-configureTCPListen(tcpsrv_t *const pThis,
+-	const uchar *const pszPort,
+-	const int bSuppOctetFram,
+-	const uchar *const pszAddr,
+-	const uchar *const pszLstnPortFileName)
++configureTCPListen(tcpsrv_t *const pThis, tcpLstnParams_t *const cnf_params)
+ {
++	assert(cnf_params->pszPort != NULL);
+ 	int i;
+-	const uchar *pPort = pszPort;
+ 	DEFiRet;
+ 
+-	assert(pszPort != NULL);
+ 	ISOBJ_TYPE_assert(pThis, tcpsrv);
+ 
+ 	/* extract port */
++	const uchar *pPort = cnf_params->pszPort;
+ 	i = 0;
+ 	while(isdigit((int) *pPort)) {
+ 		i = i * 10 + *pPort++ - '0';
+ 	}
+ 
+ 	if(i >= 0 && i <= 65535) {
+-		CHKiRet(addNewLstnPort(pThis, pszPort, bSuppOctetFram, pszAddr, pszLstnPortFileName));
++		CHKiRet(addNewLstnPort(pThis, cnf_params));
+ 	} else {
+-		LogError(0, NO_ERRCODE, "Invalid TCP listen port %s - ignored.\n", pszPort);
++		LogError(0, NO_ERRCODE, "Invalid TCP listen port %s - ignored.\n", cnf_params->pszPort);
+ 	}
+ 
+ finalize_it:
+@@ -331,8 +315,11 @@ deinit_tcp_listener(tcpsrv_t *const pThis)
+ 	/* free list of tcp listen ports */
+ 	pEntry = pThis->pLstnPorts;
+ 	while(pEntry != NULL) {
+-		free(pEntry->pszPort);
+-		prop.Destruct(&pEntry->pInputName);
++		prop.Destruct(&pEntry->cnf_params->pInputName);
++		free((void*)pEntry->cnf_params->pszPort);
++		free((void*)pEntry->cnf_params->pszAddr);
++		free((void*)pEntry->cnf_params->pszLstnPortFileName);
++		free((void*)pEntry->cnf_params);
+ 		ratelimitDestruct(pEntry->ratelimiter);
+ 		statsobj.Destruct(&(pEntry->stats));
+ 		pDel = pEntry;
+@@ -373,22 +360,21 @@ addTcpLstn(void *pUsr, netstrm_t *pLstn)
+ 
+ 
+ /* Initialize TCP listener socket for a single port
++ * Note: at this point, TLS vs. non-TLS does not matter; TLS params are
++ * set on connect!
+  * rgerhards, 2009-05-21
+  */
+ static rsRetVal
+ initTCPListener(tcpsrv_t *pThis, tcpLstnPortList_t *pPortEntry)
+ {
+ 	DEFiRet;
+-	uchar *TCPLstnPort;
+ 
+ 	ISOBJ_TYPE_assert(pThis, tcpsrv);
+ 	assert(pPortEntry != NULL);
+ 
+-	TCPLstnPort = pPortEntry->pszPort;
+-
+ 	// pPortEntry->pszAddr = NULL ==> bind to all interfaces
+-	CHKiRet(netstrm.LstnInit(pThis->pNS, (void*)pPortEntry, addTcpLstn, TCPLstnPort,
+-		pPortEntry->pszAddr, pThis->iSessMax, (uchar*)pPortEntry->pszLstnPortFileName));
++	CHKiRet(netstrm.LstnInit(pThis->pNS, (void*)pPortEntry, addTcpLstn,
++		pThis->iSessMax, pPortEntry->cnf_params));
+ 
+ finalize_it:
+ 	RETiRet;
+@@ -408,11 +394,12 @@ create_tcp_socket(tcpsrv_t *pThis)
+ 	/* init all configured ports */
+ 	pEntry = pThis->pLstnPorts;
+ 	while(pEntry != NULL) {
++dbgprintf("RGER: configuring listener %p\n", pEntry);
+ 		localRet = initTCPListener(pThis, pEntry);
+ 		if(localRet != RS_RET_OK) {
+ 			LogError(0, localRet, "Could not create tcp listener, ignoring port "
+-			"%s bind-address %s.", pEntry->pszPort,
+-			(pEntry->pszAddr == NULL) ? "(null)" : (const char*)pEntry->pszAddr);
++			"%s bind-address %s.", pEntry->cnf_params->pszPort,
++			(pEntry->cnf_params->pszAddr == NULL) ? "(null)" : (const char*)pEntry->cnf_params->pszAddr);
+ 		}
+ 		pEntry = pEntry->pNext;
+ 	}
+@@ -1236,15 +1223,6 @@ SetGnutlsPriorityString(tcpsrv_t *pThis, uchar *iVal)
+ 	RETiRet;
+ }
+ 
+-static rsRetVal
+-SetLstnPortFileName(tcpsrv_t *pThis, uchar *iVal)
+-{
+-	DEFiRet;
+-	DBGPRINTF("tcpsrv: LstnPortFileName set to %s\n",
+-		(iVal == NULL) ? "(null)" : (const char*) iVal);
+-	pThis->pszLstnPortFileName = iVal;
+-	RETiRet;
+-}
+ 
+ static rsRetVal
+ SetOnMsgReceive(tcpsrv_t *pThis, rsRetVal (*OnMsgReceive)(tcps_sess_t*, uchar*, int))
+@@ -1309,6 +1287,7 @@ SetDfltTZ(tcpsrv_t *const pThis, uchar *const tz)
+ {
+ 	DEFiRet;
+ 	ISOBJ_TYPE_assert(pThis, tcpsrv);
++dbgprintf("dfltTZ prev: %s\n", pThis->dfltTZ);
+ 	strncpy((char*)pThis->dfltTZ, (char*)tz, sizeof(pThis->dfltTZ));
+ 	pThis->dfltTZ[sizeof(pThis->dfltTZ)-1] = '\0';
+ 	RETiRet;
+@@ -1557,7 +1536,6 @@ CODESTARTobjQueryInterface(tcpsrv)
+ 	pIf->SetKeepAliveProbes = SetKeepAliveProbes;
+ 	pIf->SetKeepAliveTime = SetKeepAliveTime;
+ 	pIf->SetGnutlsPriorityString = SetGnutlsPriorityString;
+-	pIf->SetLstnPortFileName = SetLstnPortFileName;
+ 	pIf->SetUsrP = SetUsrP;
+ 	pIf->SetInputName = SetInputName;
+ 	pIf->SetOrigin = SetOrigin;
+diff --git a/runtime/tcpsrv.h b/runtime/tcpsrv.h
+index db5a1d110a..bae7e3b8b9 100644
+--- a/runtime/tcpsrv.h
++++ b/runtime/tcpsrv.h
+@@ -1,6 +1,6 @@
+ /* Definitions for tcpsrv class.
+  *
+- * Copyright 2008-2015 Adiscon GmbH.
++ * Copyright 2008-2020 Adiscon GmbH.
+  *
+  * This file is part of rsyslog.
+  *
+@@ -23,6 +23,7 @@
+ 
+ #include "obj.h"
+ #include "prop.h"
++#include "net.h"
+ #include "tcps_sess.h"
+ #include "statsobj.h"
+ 
+@@ -34,19 +35,24 @@ typedef enum ETCPsyslogFramingAnomaly {
+ } eTCPsyslogFramingAnomaly;
+ 
+ 
++/* config parameters for TCP listeners */
++struct tcpLstnParams_s {
++	const uchar *pszPort;			/**< the ports the listener shall listen on */
++	const uchar *pszAddr;                 /**< the addrs the listener shall listen on */
++	sbool bSuppOctetFram;	/**< do we support octect-counted framing? (if no->legay only!)*/
++	sbool bSPFramingFix;	/**< support work-around for broken Cisco ASA framing? */
++	const uchar *pszLstnPortFileName;	/**< File in which the dynamic port is written */
++	prop_t *pInputName;
++	ruleset_t *pRuleset;		/**< associated ruleset */
++	uchar dfltTZ[8];		/**< default TZ if none in timestamp; '\0' =No Default */
++};
++
+ /* list of tcp listen ports */
+ struct tcpLstnPortList_s {
+-	uchar *pszPort;			/**< the ports the listener shall listen on */
+-	uchar *pszAddr;                 /**< the addrs the listener shall listen on */
+-	prop_t *pInputName;
++	tcpLstnParams_t *cnf_params;	/**< listener config parameters */
+ 	tcpsrv_t *pSrv;			/**< pointer to higher-level server instance */
+-	ruleset_t *pRuleset;		/**< associated ruleset */
+ 	statsobj_t *stats;		/**< associated stats object */
+-	sbool bSuppOctetFram;	/**< do we support octect-counted framing? (if no->legay only!)*/
+ 	ratelimit_t *ratelimiter;
+-	uchar dfltTZ[8];		/**< default TZ if none in timestamp; '\0' =No Default */
+-	sbool bSPFramingFix;	/**< support work-around for broken Cisco ASA framing? */
+-	const uchar *pszLstnPortFileName;	/**< File in which the dynamic port is written */
+ 	STATSCOUNTER_DEF(ctrSubmit, mutCtrSubmit)
+ 	tcpLstnPortList_t *pNext;	/**< next port or NULL */
+ };
+@@ -130,8 +136,7 @@ BEGINinterface(tcpsrv) /* name must also be changed in ENDinterface macro! */
+ 	rsRetVal (*Construct)(tcpsrv_t **ppThis);
+ 	rsRetVal (*ConstructFinalize)(tcpsrv_t __attribute__((unused)) *pThis);
+ 	rsRetVal (*Destruct)(tcpsrv_t **ppThis);
+-	rsRetVal (*ATTR_NONNULL(1,2) configureTCPListen)(tcpsrv_t*,
+-		const uchar *pszPort, int bSuppOctetFram, const uchar *pszAddr, const uchar *);
++	rsRetVal (*ATTR_NONNULL(1,2) configureTCPListen)(tcpsrv_t*, tcpLstnParams_t *const cnf_params);
+ 	rsRetVal (*create_tcp_socket)(tcpsrv_t *pThis);
+ 	rsRetVal (*Run)(tcpsrv_t *pThis);
+ 	/* set methods */
+@@ -188,8 +193,6 @@ BEGINinterface(tcpsrv) /* name must also be changed in ENDinterface macro! */
+ 	rsRetVal (*SetGnutlsPriorityString)(tcpsrv_t*, uchar*);
+ 	/* added v21 -- Preserve case in fromhost, 2018-08-16 */
+ 	rsRetVal (*SetPreserveCase)(tcpsrv_t *pThis, int bPreserveCase);
+-	/* added v22 -- File for dynamic Port, 2018-08-29 */
+-	rsRetVal (*SetLstnPortFileName)(tcpsrv_t*, uchar*);
+ 	/* added v23 -- Options for stricter driver behavior, 2019-08-16 */
+ 	rsRetVal (*SetDrvrCheckExtendedKeyUsage)(tcpsrv_t *pThis, int ChkExtendedKeyUsage);
+ 	rsRetVal (*SetDrvrPrioritizeSAN)(tcpsrv_t *pThis, int prioritizeSan);
+diff --git a/runtime/typedefs.h b/runtime/typedefs.h
+index 06f5c25a8c..000b4da4fe 100644
+--- a/runtime/typedefs.h
++++ b/runtime/typedefs.h
+@@ -123,6 +123,7 @@ typedef int rs_size_t; /* we do never need more than 2Gig strings, signed permit
+ typedef rsRetVal (*prsf_t)(struct vmstk_s*, int);	/* pointer to a RainerScript function */
+ typedef uint64 qDeqID;	/* queue Dequeue order ID. 32 bits is considered dangerously few */
+ 
++typedef struct tcpLstnParams_s tcpLstnParams_t;
+ typedef struct tcpLstnPortList_s tcpLstnPortList_t; // TODO: rename?
+ typedef struct strmLstnPortList_s strmLstnPortList_t; // TODO: rename?
+ typedef struct actWrkrIParams actWrkrIParams_t;

@@ -1,0 +1,1 @@
+/usr/bin/c++  -fvisibility=hidden -O2 -g -DNDEBUG -rdynamic -Wl,--no-undefined -flto -fno-fat-lto-objects CMakeFiles/c-extra-test.dir/pn_test.cpp.o CMakeFiles/c-extra-test.dir/url_test.cpp.o CMakeFiles/test_main.dir/test_main.cpp.o -o c-extra-test  -Wl,-rpath,/root/rpmbuild/BUILD/qpid-proton-0.34.0/bld/c ../libqpid-proton.so.11.13.0 

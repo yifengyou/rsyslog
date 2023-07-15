@@ -1,0 +1,479 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>imdocker: Docker Input Module &#8212; rsyslog 8.2102.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/rsyslog.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="imfile: Text File Input Module" href="imfile.html" />
+    <link rel="prev" title="imbatchreport: Batch report input module" href="imbatchreport.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="imfile.html" title="imfile: Text File Input Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="imbatchreport.html" title="imbatchreport: Batch report input module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" accesskey="U">Input Modules</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="imdocker-docker-input-module">
+<h1>imdocker: Docker Input Module<a class="headerlink" href="#imdocker-docker-input-module" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="26%" />
+<col width="74%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Module Name:</strong></td>
+<td><strong>imdocker</strong></td>
+</tr>
+<tr class="row-even"><td><strong>Author:</strong></td>
+<td>Nelson Yen</td>
+</tr>
+<tr class="row-odd"><td><strong>Available since:</strong></td>
+<td>8.41.0</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>The imdocker input plug-in provides the ability to receive container logs from Docker (engine)
+via the Docker Rest API.</p>
+<p>Other features include:</p>
+<ul class="simple">
+<li>filter containers through the plugin options</li>
+<li>handle long log lines (greater than 16kb) and obtain</li>
+<li>container metadata, such as container id, name, image id, labels, etc.</li>
+</ul>
+<p><strong>Note</strong>: Multiple docker instances are not supported at the time of this writing.</p>
+</div>
+<div class="section" id="configuration-parameters">
+<h2>Configuration Parameters<a class="headerlink" href="#configuration-parameters" title="Permalink to this headline">¶</a></h2>
+<p>The configuration parameters for this module are designed for tailoring
+the behavior of imdocker.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Parameter names are case-insensitive.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module supports module parameters, only.</p>
+</div>
+<div class="section" id="module-parameters">
+<h3>Module Parameters<a class="headerlink" href="#module-parameters" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="dockerapiunixsockaddr">
+<h4>DockerApiUnixSockAddr<a class="headerlink" href="#dockerapiunixsockaddr" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>/var/run/docker.sock</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies the Docker unix socket address to use.</p>
+</div>
+<div class="section" id="apiversionstr">
+<h4>ApiVersionStr<a class="headerlink" href="#apiversionstr" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>v1.27</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies the version of Docker API to use. Must be in the format specified by the
+Docker api, e.g. similar to the default above (v1.27, v1.28, etc).</p>
+</div>
+<div class="section" id="pollinginterval">
+<h4>PollingInterval<a class="headerlink" href="#pollinginterval" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>integer</td>
+<td>60</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies the polling interval in seconds, imdocker will poll for new containers by
+calling the ‘List containers’ API from the Docker engine.</p>
+</div>
+<div class="section" id="listcontainersoptions">
+<h4>ListContainersOptions<a class="headerlink" href="#listcontainersoptions" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>&#160;</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies the http query component of the a ‘List Containers’ HTTP API request.
+See Docker API for more information about available options.
+<strong>Note</strong>: It is not necessary to prepend the string with ‘?’.</p>
+</div>
+<div class="section" id="getcontainerlogoptions">
+<h4>GetContainerLogOptions<a class="headerlink" href="#getcontainerlogoptions" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>string</td>
+<td>timestamp=0&amp;follow=1&amp;stdout=1&amp;stderr=1&amp;tail=1</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Specifies the http query component of the a ‘Get container logs’ HTTP API request.
+See Docker API for more information about available options.
+<strong>Note</strong>: It is not necessary to prepend the string with ‘?’.</p>
+</div>
+<div class="section" id="retrievenewlogsfromstart">
+<h4>RetrieveNewLogsFromStart<a class="headerlink" href="#retrievenewlogsfromstart" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>1</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>This option specifies the whether imdocker will process newly found container logs from the beginning.
+The exception is for containers found on start-up. The container logs for containers
+that were active at imdocker start-up are controlled via ‘GetContainerLogOptions’, the
+‘tail’ in particular.</p>
+</div>
+<div class="section" id="defaultfacility">
+<h4>DefaultFacility<a class="headerlink" href="#defaultfacility" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>integer or string (preferred)</td>
+<td>user</td>
+<td>no</td>
+<td><code class="docutils literal notranslate"><span class="pre">$InputFileFacility</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>The syslog facility to be assigned to log messages received. Specified as numbers.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="https://en.wikipedia.org/wiki/Syslog">https://en.wikipedia.org/wiki/Syslog</a></p>
+</div>
+</div>
+<div class="section" id="defaultseverity">
+<h4>DefaultSeverity<a class="headerlink" href="#defaultseverity" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>integer or string (preferred)</td>
+<td>notice</td>
+<td>no</td>
+<td><code class="docutils literal notranslate"><span class="pre">$InputFileSeverity</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>The syslog severity to be assigned to log messages received. Specified as numbers (e.g. 6
+for <code class="docutils literal notranslate"><span class="pre">info</span></code>). Textual form is suggested. Default is <code class="docutils literal notranslate"><span class="pre">notice</span></code>.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="https://en.wikipedia.org/wiki/Syslog">https://en.wikipedia.org/wiki/Syslog</a></p>
+</div>
+</div>
+<div class="section" id="escapelf">
+<h4>escapeLF<a class="headerlink" href="#escapelf" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="colwidths-auto parameter-table docutils">
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">default</th>
+<th class="head">mandatory</th>
+<th class="head"><code class="docutils literal notranslate"><span class="pre">obsolete</span> <span class="pre">legacy</span></code> directive</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>binary</td>
+<td>on</td>
+<td>no</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>This is only meaningful if multi-line messages are to be processed.
+LF characters embedded into syslog messages cause a lot of trouble,
+as most tools and even the legacy syslog TCP protocol do not expect
+these. If set to “on”, this option avoid this trouble by properly
+escaping LF characters to the 4-byte sequence “#012”. This is
+consistent with other rsyslog control character escaping. By default,
+escaping is turned on. If you turn it off, make sure you test very
+carefully with all associated tools. Please note that if you intend
+to use plain TCP syslog with embedded LF characters, you need to
+enable octet-counted framing.
+For more details, see Rainer’s blog posting on imfile LF escaping.</p>
+</div>
+</div>
+</div>
+<div class="section" id="metadata">
+<h2>Metadata<a class="headerlink" href="#metadata" title="Permalink to this headline">¶</a></h2>
+<p>The imdocker module supports message metadata. It supports the following
+data items:</p>
+<ul class="simple">
+<li><strong>Id</strong> - the container id associated with the message.</li>
+<li><strong>Names</strong> - the first container associated with the message.</li>
+<li><strong>ImageID</strong> - the image id of the container associated with the message.</li>
+<li><strong>Labels</strong> - all the labels of the container associated with the message in json format.</li>
+</ul>
+<p><strong>Note</strong>: At the time of this writing, metadata is always enabled.</p>
+</div>
+<div class="section" id="statistic-counter">
+<h2>Statistic Counter<a class="headerlink" href="#statistic-counter" title="Permalink to this headline">¶</a></h2>
+<p>This plugin maintains <cite>statistics &lt;http://www.rsyslog.com/rsyslog-statistic-counter/&gt;</cite>. The statistic is named “imdocker”.</p>
+<p>The following properties are maintained for each listener:</p>
+<ul class="simple">
+<li><strong>submitted</strong> - total number of messages submitted to main queue after reading from journal for processing
+since startup. All records may not be submitted due to rate-limiting.</li>
+<li><strong>ratelimit.discarded</strong> - number of messages discarded due to rate-limiting within configured
+rate-limiting interval.</li>
+<li><strong>curl.errors</strong> - total number of curl errors.</li>
+</ul>
+</div>
+<div class="section" id="caveats-known-bugs">
+<h2>Caveats/Known Bugs<a class="headerlink" href="#caveats-known-bugs" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>At the moment, this plugin only supports a single instance of docker on a host.</li>
+</ul>
+</div>
+<div class="section" id="configuration-examples">
+<h2>Configuration Examples<a class="headerlink" href="#configuration-examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="load-module-with-only-defaults">
+<h3>Load module, with only defaults<a class="headerlink" href="#load-module-with-only-defaults" title="Permalink to this headline">¶</a></h3>
+<p>This activates the module with all the default options:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module(load=&quot;imdocker&quot;)
+</pre></div>
+</div>
+</div>
+<div class="section" id="load-module-with-container-filtering">
+<h3>Load module, with container filtering<a class="headerlink" href="#load-module-with-container-filtering" title="Permalink to this headline">¶</a></h3>
+<p>This activates the module with container filtering on a label:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module(load=&quot;imdocker&quot;
+  DockerApiUnixSockAddr=&quot;/var/run/docker.sock&quot;
+  ApiVersionStr=&quot;v1.27&quot;
+  PollingInterval=&quot;60&quot;
+  ListContainersOptions=&quot;filters={\&quot;label\&quot;:[\&quot;log_opt_enabled\&quot;]}&quot;
+  GetContainerLogOptions=&quot;timestamps=0&amp;follow=1&amp;stdout=1&amp;stderr=0&amp;tail=1&quot;
+)
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-template-to-get-container-metadata">
+<h3>Example template to get container metadata<a class="headerlink" href="#example-template-to-get-container-metadata" title="Permalink to this headline">¶</a></h3>
+<p>An example of how to create a template with container metadata</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>template (name=&quot;ImdockerFormat&quot; type=&quot;string&quot;
+      string=&quot;program:%programname% tag:%syslogtag% id:%$!metadata!Id% name:%$!metadata!Names% imageid:%$!metadata!ImageID% labels:%$!metadata!Labels% msg: %msg%\n&quot;
+)
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Help with configuring/using <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://lists.adiscon.net/mailman/listinfo/rsyslog">Mailing list</a> - best route for general questions</li>
+<li>GitHub: <a class="reference external" href="https://github.com/rsyslog/rsyslog/">rsyslog source project</a> - detailed questions, reporting issues
+that are believed to be bugs with <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code></li>
+<li>Stack Exchange (<a class="reference external" href="https://stackexchange.com/filters/327462/rsyslog">View</a>, <a class="reference external" href="https://serverfault.com/questions/ask?tags=rsyslog">Ask</a>)
+- experimental support from rsyslog community</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p>Contributing to <code class="docutils literal notranslate"><span class="pre">Rsyslog</span></code>:</p>
+<ul class="last simple">
+<li>Source project: <a class="reference external" href="https://github.com/rsyslog/rsyslog/blob/master/README.md">rsyslog project README</a>.</li>
+<li>Documentation: <a class="reference external" href="https://github.com/rsyslog/rsyslog-doc/blob/master/README.md">rsyslog-doc project README</a></li>
+</ul>
+</div>
+<p>Copyright 2008-2020 <a class="reference external" href="https://rainer.gerhards.net/">Rainer Gerhards</a>
+(<a class="reference external" href="https://www.rainer-gerhards.de/grossrinderfeld/">Großrinderfeld</a>),
+and Others.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">imdocker: Docker Input Module</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#configuration-parameters">Configuration Parameters</a><ul>
+<li><a class="reference internal" href="#module-parameters">Module Parameters</a><ul>
+<li><a class="reference internal" href="#dockerapiunixsockaddr">DockerApiUnixSockAddr</a></li>
+<li><a class="reference internal" href="#apiversionstr">ApiVersionStr</a></li>
+<li><a class="reference internal" href="#pollinginterval">PollingInterval</a></li>
+<li><a class="reference internal" href="#listcontainersoptions">ListContainersOptions</a></li>
+<li><a class="reference internal" href="#getcontainerlogoptions">GetContainerLogOptions</a></li>
+<li><a class="reference internal" href="#retrievenewlogsfromstart">RetrieveNewLogsFromStart</a></li>
+<li><a class="reference internal" href="#defaultfacility">DefaultFacility</a></li>
+<li><a class="reference internal" href="#defaultseverity">DefaultSeverity</a></li>
+<li><a class="reference internal" href="#escapelf">escapeLF</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#metadata">Metadata</a></li>
+<li><a class="reference internal" href="#statistic-counter">Statistic Counter</a></li>
+<li><a class="reference internal" href="#caveats-known-bugs">Caveats/Known Bugs</a></li>
+<li><a class="reference internal" href="#configuration-examples">Configuration Examples</a><ul>
+<li><a class="reference internal" href="#load-module-with-only-defaults">Load module, with only defaults</a></li>
+<li><a class="reference internal" href="#load-module-with-container-filtering">Load module, with container filtering</a></li>
+<li><a class="reference internal" href="#example-template-to-get-container-metadata">Example template to get container metadata</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="imbatchreport.html"
+                        title="previous chapter">imbatchreport: Batch report input module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="imfile.html"
+                        title="next chapter">imfile: Text File Input Module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/configuration/modules/imdocker.rst.txt"
+           rel="nofollow">Show Source</a></li>
+    <li><a href="https://github.com/rsyslog/rsyslog-doc/edit/master/source/configuration/modules/imdocker.rst"
+           rel="nofollow">Edit on GitHub</a></li>
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="imfile.html" title="imfile: Text File Input Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="imbatchreport.html" title="imbatchreport: Batch report input module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">rsyslog 8.2102.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Configuration</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Modules</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="idx_input.html" >Input Modules</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>
